@@ -1,30 +1,31 @@
 <?php
-  require_once 'config.php';
+require_once 'config.php';
 
-  if (!isset($_SESSION['user_id'])) {
-      header("Location: login.html");
-      exit;
-  }
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login.html");
+  exit;
+}
 
-  $stmt = $pdo->prepare("
+$stmt = $pdo->prepare("
       SELECT *
       FROM users
       WHERE user_id = ?
   ");
 
-  $stmt->execute([$_SESSION['user_id']]);
+$stmt->execute([$_SESSION['user_id']]);
 
-  $user = $stmt->fetch();
+$user = $stmt->fetch();
 
-  $fullName = $user['full_name'];
-  $email = $user['email'];
-  $country = $user['country'];
-  $joinedDate =$user['created_at'];
-  $passwordHash = $user['password_hash'];
+$fullName = $user['full_name'];
+$email = $user['email'];
+$country = $user['country'];
+$joinedDate = $user['created_at'];
+$passwordHash = $user['password_hash'];
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,31 +33,33 @@
 
   <!-- favicon -->
   <link rel="icon" type="image/png" href="assets/images/logo.png" sizes="32x32">
-  
+
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  
+  <link href="https://cdn.datatables.net/2.3.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
   <!-- Font Awesome 6 Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <!-- Chart.js for real-time visualization of child well-being metrics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
+
 <body>
 
   <!-- Alert notification overlay container -->
   <div class="container mt-4 px-3" id="alertContainer" style="position: fixed; top: 10px; right: 20px; z-index: 9999; max-width: 420px;"></div>
 
   <div class="dashboard-container">
-    
+
     <!-- Left Sidebar Menu -->
     <aside class="side-menu">
       <div class="brand-header">
@@ -110,7 +113,7 @@
     </aside>
 
     <section class="content-area">
-      
+
       <!-- Panel Sub-section: DASHBOARD HOME -->
       <div id="dashHome" class="dash-section active-section">
         <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
@@ -119,12 +122,12 @@
             <p class="text-muted mb-0 small">Overview of your Dashboard</p>
           </div>
           <div>
-          <button class="btn btn-primary-custom my-2" onclick="switchDashSection('dashAssessment')">
-            <i class="fa-solid fa-heart-pulse me-1"></i> Start New Evaluation
-          </button>
-          <button class="btn btn-outline-danger my-2" onclick="openNearestHospitals()">
-          <i class="fa-solid fa-hospital me-1"></i> Find Nearby Hospital
-        </button>
+            <button class="btn btn-primary-custom my-2" onclick="switchDashSection('dashAssessment')">
+              <i class="fa-solid fa-heart-pulse me-1"></i> Start New Evaluation
+            </button>
+            <button class="btn btn-outline-danger my-2" onclick="openNearestHospitals()">
+              <i class="fa-solid fa-hospital me-1"></i> Find Nearby Hospital
+            </button>
           </div>
         </div>
 
@@ -176,11 +179,11 @@
               <div style="position: relative; height: 320px; width: 100%;">
                 <canvas id="wellbeingChart"></canvas>
               </div>
-              
+
               <!-- STYLED GRAPH NOTE BAR -->
               <div class="mt-4 p-3 bg-light rounded-3 border border-1 border-light-subtle">
                 <div class="row align-items-center g-3 text-center text-md-start">
-                  
+
                   <div class="col-md-12 col-lg-12">
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
                       <span class="badge bg-success-subtle text-success px-2.5 py-1.5 border border-success-subtle rounded-pill" style="font-size: 0.75rem;">
@@ -209,9 +212,9 @@
             </h5>
             <span class="text-muted small">Updated live</span>
           </div>
-          
+
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" id="recentAssessmentsDataTable">
               <thead>
                 <tr class="table-light text-muted small" style="font-size: 0.82rem; letter-spacing: 0.3px; text-transform: uppercase;">
                   <th class="ps-3">Child Name</th>
@@ -235,7 +238,7 @@
             <i class="fa-solid fa-user-plus me-1"></i> Register Child's Profile
           </h4>
           <p class="text-muted small mb-4">Add your child's personal details for tracking. Users must be age 12 or younger.</p>
-          
+
           <form id="childForm" onsubmit="handleSaveChild(event)">
             <div class="mb-3">
               <label for="childName" class="form-label fw-semibold small">Child's First & Last Name</label>
@@ -339,7 +342,7 @@
                 <i class="fa-solid fa-notes-medical me-1"></i> Evaluation Logs
               </h5>
               <div class="table-responsive">
-                <table class="table table-sm align-middle">
+                <table class="table table-sm align-middle" id="childHistoryDataTable">
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -364,7 +367,7 @@
               <i class="fa-solid fa-clipboard-question me-1"></i> Smart Symptom Checker
             </h4>
             <p class="text-muted small mb-4">Complete the dynamic questions to assess immediate discomfort or physical changes. Select a child profile to get started:</p>
-            
+
             <div class="mb-4">
               <label for="assessmentTargetChild" class="form-label fw-semibold small">Select Child Profile</label>
               <select class="form-select form-control" id="assessmentTargetChild">
@@ -393,12 +396,12 @@
 
             <!-- Progress Bar -->
             <div class="assessment-progress-container">
-              <div class="assessment-progress-bar" id="wizardProgressBar" style="width: 0%;" ></div>
+              <div class="assessment-progress-bar" id="wizardProgressBar" style="width: 0%;"></div>
             </div>
 
             <!-- Loading State -->
-            <div id="assessmentLoading" class="text-center py-5" style="display: none;" >
-              <div class="spinner-border text-primary mb-3" role="status" >
+            <div id="assessmentLoading" class="text-center py-5" style="display: none;">
+              <div class="spinner-border text-primary mb-3" role="status">
                 <span class="visually-hidden">Loading...</span>
               </div>
 
@@ -408,9 +411,8 @@
             </div>
 
             <!-- Dynamic Question -->
-            <div class="question-card" id="dynamicQuestionCard" style="display: none;" >
-              <form id="assessmentForm" onsubmit="event.preventDefault();"
-              >
+            <div class="question-card" id="dynamicQuestionCard" style="display: none;">
+              <form id="assessmentForm" onsubmit="event.preventDefault();">
                 <div id="dynamicQuestionContainer"></div>
               </form>
             </div>
@@ -419,15 +421,14 @@
             <div
               class="d-flex justify-content-between mt-3"
               id="wizardNavigation"
-              style="display: none;"
-            >
+              style="display: none;">
               <button
-                type="button" class="btn btn-outline-secondary" id="btnPrevQuestion" onclick="navigateWizard(-1)" >
+                type="button" class="btn btn-outline-secondary" id="btnPrevQuestion" onclick="navigateWizard(-1)">
                 <i class="fa-solid fa-chevron-left me-1"></i>
                 Back
               </button>
 
-              <button type="button" class="btn btn-primary-custom" id="btnNextQuestion" onclick="navigateWizard(1)" >
+              <button type="button" class="btn btn-primary-custom" id="btnNextQuestion" onclick="navigateWizard(1)">
                 Next
                 <i class="fa-solid fa-chevron-right ms-1"></i>
               </button>
@@ -439,7 +440,7 @@
 
       <div id="dashResult" class="dash-section">
         <div class="card border-0 shadow-sm mx-auto" style="max-width: 780px; border-radius: 20px; overflow: hidden; background-color: var(--white);">
-          
+
           <!-- Dynamic Alert Color Header Badge -->
           <div id="resultHeaderBanner" class="p-4 text-center text-white" style="background-color: var(--primary);">
             <div class="mb-2">
@@ -450,12 +451,12 @@
           </div>
 
           <div class="p-4 p-md-5">
-            
+
             <!-- Dual-Column Structured Action Plan (Uncluttered layout) -->
             <h5 class="fw-bold text-dark mb-3">
               <i class="fa-solid fa-hand-holding-medical text-teal me-2"></i> Immediate Home Care Plan
             </h5>
-            
+
             <div class="row g-3 mb-4">
               <!-- Column 1: Immediate Steps -->
               <div class="col-md-6">
@@ -464,7 +465,7 @@
                   <p class="mb-0 text-muted leading-relaxed" id="resultDescription">Keep comfort levels high, monitor hydration, and offer restful opportunities.</p>
                 </div>
               </div>
-              
+
               <!-- Column 2: Safety Rules -->
               <div class="col-md-6">
                 <div class="p-3 h-100 rounded-3 border-start border-4" style="background-color: #fcfcf9; border-color: var(--primary) !important;">
@@ -478,7 +479,7 @@
             <div class="p-4 rounded-3 text-center mb-4" style="background-color: var(--secondary); border: 1px solid rgba(15, 92, 94, 0.1);">
               <h6 class="fw-bold text-dark mb-1">How helpful was this assessment?</h6>
               <p class="text-muted small mb-3">Help us improve by rating your home health guidance experience below.</p>
-              
+
               <!-- Interactive Stars Row -->
               <div class="d-flex justify-content-center gap-2 mb-2">
                 <i class="fa-regular fa-star star-rating-btn" data-value="1" onclick="handlePostAssessmentRating(1)" style="font-size: 1.8rem; color: var(--accent-dark); cursor: pointer; transition: color 0.15s ease;"></i>
@@ -509,32 +510,49 @@
 
       <div id="dashHospitals" class="dash-section">
         <div class="card border-0 shadow-sm mx-auto" style="max-width: 920px; border-radius: 20px; overflow: hidden; background-color: var(--white);">
-          
+
           <!-- Header -->
           <div style="background-color: var(--primary);" class="p-4 text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
               <div class="d-flex align-items-center gap-2 mb-1">
-              <h3 class="fw-bold mb-1"><i class="fa-solid fa-truck-medical me-2"></i>Nearby Emergency Care</h3>
-            <button class="btn btn-sm btn-light text-danger fw-semibold ms-auto" id="btnHospitalsBack" onclick="switchDashSection('dashResult')">
-              <i class="fa-solid fa-arrow-left me-1"></i> Back to Result
-            </button>
+                <h3 class="fw-bold mb-1"><i class="fa-solid fa-truck-medical me-2"></i>Nearby Emergency Care</h3>
               </div>
               <p class="mb-0 small opacity-90">CareNest is using your current location to find the closest hospitals and the distance.</p>
             </div>
+            <button class="btn btn-sm btn-light text-danger fw-semibold ms-auto" id="btnHospitalsBack" onclick="switchDashSection('dashResult')">
+              <i class="fa-solid fa-arrow-left me-1"></i> Back to Result
+            </button>
           </div>
 
           <div class="p-4 p-md-5">
-            
+
             <!-- Emergency Status Card -->
             <div class="card border-2 mb-4 rounded-3 p-3 text-dark" style="border-color: var(--primary) !important; background-color: var(--primary-subtle) !important;">
               <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
                 <span class="badge text-white px-2.5 py-1.5 rounded-pill" style="background-color: var(--primary) !important;"><i class="fa-solid fa-triangle-exclamation me-1"></i> <span class="small text-muted fw-semibold" id="hospitalAssessmentTime" style="color: white !important;">--</span></span>
-                
+
               </div>
               <h5 class="fw-bold mb-1 text-danger" id="hospitalChildName">Hospital Search</h5>
               <p class="mb-0 small fw-medium text-danger-emphasis" id="hospitalUrgencyMessage">
                 Select a nearby hospital to call, contact, or navigate there.
               </p>
+            </div>
+
+            <!-- Emergency Summary Card -->
+            <div id="doctorSummaryCard" class="card border border-1 border-secondary-subtle p-3 p-md-4 rounded-3 bg-light mb-4">
+              <div class="d-flex justify-content-between align-items-center flex-wrap mb-2 gap-2">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-file-medical text-teal me-2" style="color: var(--primary);"></i> What to Tell the Doctor</h5>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-secondary py-1 px-3" onclick="copyEmergencySummary()"><i class="fa-solid fa-copy me-1"></i> Copy Summary</button>
+                  <button class="btn btn-sm btn-success py-1 px-3 text-white" onclick="shareEmergencySummaryWhatsApp()"><i class="fa-brands fa-whatsapp me-1"></i> Share on WhatsApp</button>
+                  <button class="btn btn-sm btn-primary-custom py-1 px-3" onclick="shareEmergencySummary()">
+                    <i class="fa-solid fa-share-nodes me-1"></i> Share
+                  </button>
+                </div>
+              </div>
+              <p class="text-muted small mb-2">Show or send this structured assessment summary when arriving at the facility:</p>
+
+              <div class="form-control bg-white text-dark" id="doctorEmergencySummary" style="font-size: 0.85rem; border-color: var(--border); height: 150px; overflow-y: auto; scroll-behavior: smooth; white-space: pre-wrap;"></div>
             </div>
 
             <!-- Location Permission and Loading / Error States -->
@@ -552,55 +570,38 @@
             </div>
 
             <!-- Nearby Hospital Cards Container -->
-            
+
             <div class="row g-3 mb-4" id="nearbyHospitalsList">
               <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hospital-user text-danger me-2"></i> Closest Emergency Facilities</h5>
             </div>
             <div class="text-center mt-3">
               <button
-                  id="loadMoreHospitalsBtn"
-                  class="btn btn-outline-success d-none"
-                  onclick="loadMoreHospitals()">
+                id="loadMoreHospitalsBtn"
+                class="btn btn-outline-success d-none"
+                onclick="loadMoreHospitals()">
 
-                  <i class="fa-solid fa-plus me-1"></i>
-                  Load More Hospitals
+                <i class="fa-solid fa-plus me-1"></i>
+                Load More Hospitals
               </button>
-          </div>
+            </div>
             <div id="hospitalAssessmentPrompt" class="alert text-center py-4 mb-4 d-none">
 
-                <i class="fa-solid fa-clipboard-question fa-2x mb-3 text-primary"></i>
+              <i class="fa-solid fa-clipboard-question fa-2x mb-3 text-primary"></i>
 
-                <h6 class="fw-bold mb-2">
-                    No assessment selected
-                </h6>
+              <h6 class="fw-bold mb-2">
+                No assessment selected
+              </h6>
 
-                <p class="small text-muted mb-3">
-                    Complete an assessment today to generate a detailed doctor summary.
-                </p>
+              <p class="small text-muted mb-3">
+                Complete an assessment today to generate a detailed doctor summary.
+              </p>
 
-                <button class="btn btn-primary-custom"
-                        onclick="switchDashSection('dashAssessment')">
-                    <i class="fa-solid fa-stethoscope me-1"></i>
-                    Start Assessment
-                </button>
+              <button class="btn btn-primary-custom"
+                onclick="switchDashSection('dashAssessment')">
+                <i class="fa-solid fa-stethoscope me-1"></i>
+                Start Assessment
+              </button>
 
-            </div>
-
-            <!-- Emergency Summary Card -->
-            <div id="doctorSummaryCard" class="card border border-1 border-secondary-subtle p-3 p-md-4 rounded-3 bg-light mb-4">
-              <div class="d-flex justify-content-between align-items-center flex-wrap mb-2 gap-2">
-                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-file-medical text-teal me-2" style="color: var(--primary);"></i> What to Tell the Doctor</h5>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-sm btn-outline-secondary py-1 px-3" onclick="copyEmergencySummary()"><i class="fa-solid fa-copy me-1"></i> Copy Summary</button>
-                  <button class="btn btn-sm btn-success py-1 px-3 text-white" onclick="shareEmergencySummaryWhatsApp()"><i class="fa-brands fa-whatsapp me-1"></i> Share on WhatsApp</button>
-                  <button class="btn btn-sm btn-primary-custom py-1 px-3" onclick="shareEmergencySummary()">
-                    <i class="fa-solid fa-share-nodes me-1"></i> Share
-                  </button>
-                </div>
-              </div>
-              <p class="text-muted small mb-2">Show or send this structured assessment summary when arriving at the facility:</p>
-              
-              <textarea class="form-control font-monospace small bg-white text-dark" id="doctorEmergencySummary" rows="9" readonly style="font-size: 0.85rem; border-color: var(--border);"></textarea>
             </div>
 
           </div>
@@ -611,7 +612,7 @@
 
       <div id="dashAppointment" class="dash-section">
         <div class="row g-4">
-          
+
           <div class="col-lg-6">
             <div class="card p-4 border h-100">
               <h4 class="fw-bold mb-1" style="color: var(--primary);">
@@ -653,7 +654,7 @@
                 <i class="fa-solid fa-calendar-days me-1"></i> Scheduled Consultations
               </h5>
               <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle" id="appointmentsDataTable">
                   <thead>
                     <tr class="table-light">
                       <th>Child Name</th>
@@ -678,7 +679,7 @@
             <i class="fa-solid fa-user-gear me-1"></i> Account Settings
           </h4>
           <p class="text-muted small mb-4">Modify your account information.</p>
-          
+
           <form id="profileForm" onsubmit="handleUpdateProfile(event)">
             <div class="mb-3">
               <label for="profName" class="form-label fw-semibold small">Your Name</label>
@@ -688,7 +689,7 @@
               <label for="profEmail" class="form-label fw-semibold small">Email Address</label>
               <input type="email" class="form-control" id="profEmail" disabled value="<?php echo "$email"; ?>" required>
             </div>
-             <div class="mb-3">
+            <div class="mb-3">
               <label for="profDateJoined" class="form-label fw-semibold small">Date Joined</label>
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 8px 0 0 8px; border-color: var(--border);">
@@ -733,37 +734,44 @@
 
   <!-- Bootstrap 5 bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/2.3.8/js/dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/2.3.8/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>emailjs.init({publicKey:"Sd2JlDEa-A0biWBO2"});</script>
-  
+  <script>
+    emailjs.init({
+      publicKey: "Sd2JlDEa-A0biWBO2"
+    });
+  </script>
+
   <!-- Shared JS Code -->
   <script src="assets/js/app.js"></script>
 
   <script>
-    const GEOAPIFY_API_KEY="80c02f4074064f80826d21c6c60b7cbf";
-    let currentUserLatitude=null;
-    let currentUserLongitude=null;
-    let selectedHospitalName=null;
-    let selectedHospitalPhone=null;
-    let selectedHospitalDuration=null;
-    let activeHospitalAssessment=null;
-    let activeHospitalChild=null;
+    const GEOAPIFY_API_KEY = "80c02f4074064f80826d21c6c60b7cbf";
+    let currentUserLatitude = null;
+    let currentUserLongitude = null;
+    let selectedHospitalName = null;
+    let selectedHospitalPhone = null;
+    let selectedHospitalDuration = null;
+    let activeHospitalAssessment = null;
+    let activeHospitalChild = null;
 
     //variables to store the list of nearby hospitals and the number of displayed hospitals
     let allNearbyHospitals = [];
     let displayedHospitals = 0;
 
-    function openNearestHospitals(){
-      const assessments=(typeof getData==="function"?getData("assessments"):null)||window.assessmentsList||[];
-      const children=(typeof getData==="function"?getData("children"):null)||window.childrenList||[];
+    function openNearestHospitals() {
+      const assessments = (typeof getData === "function" ? getData("assessments") : null) || (typeof assessmentsList !== "undefined" ? assessmentsList : []);
+      const children = (typeof getData === "function" ? getData("children") : null) || (typeof childrenList !== "undefined" ? childrenList : []);
 
-      activeHospitalAssessment=null;
-      activeHospitalChild=null;
+      activeHospitalAssessment = null;
+      activeHospitalChild = null;
 
-      if(typeof selectedAssessmentId!=="undefined"&&selectedAssessmentId){
-        activeHospitalAssessment=assessments.find(a=>
-          Number(a.assessment_id||a.id)===Number(selectedAssessmentId)
-        )||null;
+      if (typeof selectedAssessmentId !== "undefined" && selectedAssessmentId) {
+        activeHospitalAssessment = assessments.find(a =>
+          Number(a.assessment_id || a.id) === Number(selectedAssessmentId)
+        ) || null;
       }
 
       const hasAssessment = !!activeHospitalAssessment;
@@ -772,40 +780,40 @@
       document.getElementById("hospitalAssessmentPrompt").classList.toggle("d-none", hasAssessment);
       document.getElementById("btnHospitalsBack").classList.toggle("d-none", !hasAssessment);
 
-      if(activeHospitalAssessment){
-        activeHospitalChild=children.find(c=>
-          Number(c.child_id||c.id)===Number(activeHospitalAssessment.child_id)
-        )||null;
+      if (activeHospitalAssessment) {
+        activeHospitalChild = children.find(c =>
+          Number(c.child_id || c.id) === Number(activeHospitalAssessment.child_id)
+        ) || null;
       }
 
-      const childName=activeHospitalChild
-        ? activeHospitalChild.child_name||activeHospitalChild.name||"Child"
-        :"No assessment selected";
+      const childName = activeHospitalChild ?
+        activeHospitalChild.child_name || activeHospitalChild.name || "Child" :
+        "No assessment selected";
 
-      const assessmentTime=activeHospitalAssessment
-        ? activeHospitalAssessment.assessment_date||activeHospitalAssessment.date||"Recent assessment"
-        :"Hospital search without assessment";
+      const assessmentTime = activeHospitalAssessment ?
+        activeHospitalAssessment.assessment_date || activeHospitalAssessment.date || "Recent assessment" :
+        "Hospital search without assessment";
 
-      document.getElementById("hospitalChildName").textContent=childName;
-      document.getElementById("hospitalAssessmentTime").textContent=assessmentTime;
-      document.getElementById("hospitalUrgencyMessage").textContent=
-      activeHospitalAssessment
-        ?"Immediate medical attention is recommended. Select a hospital below and leave as soon as possible."
-        :" Complete an assessment today to prepare a structured summary for the doctor.";
+      document.getElementById("hospitalChildName").textContent = childName;
+      document.getElementById("hospitalAssessmentTime").textContent = assessmentTime;
+      document.getElementById("hospitalUrgencyMessage").textContent =
+        activeHospitalAssessment ?
+        "Immediate medical attention is recommended. Select a hospital below and leave as soon as possible." :
+        " Complete an assessment today to prepare a structured summary for the doctor.";
 
-        document.getElementById("hospitalAssessmentPrompt")
-        ?.classList.toggle("d-none",Boolean(activeHospitalAssessment));
+      document.getElementById("hospitalAssessmentPrompt")
+        ?.classList.toggle("d-none", Boolean(activeHospitalAssessment));
 
       switchDashSection("dashHospitals");
       document.getElementById("hospitalLoadingState").classList.remove("d-none");
       document.getElementById("hospitalErrorState").classList.add("d-none");
-      document.getElementById("nearbyHospitalsList").innerHTML="";
+      document.getElementById("nearbyHospitalsList").innerHTML = "";
 
-      selectedHospitalName=null;
-      selectedHospitalPhone=null;
-      selectedHospitalDuration=null;
-      if(activeHospitalAssessment){
-          buildEmergencySummary();
+      selectedHospitalName = null;
+      selectedHospitalPhone = null;
+      selectedHospitalDuration = null;
+      if (activeHospitalAssessment) {
+        buildEmergencySummary();
       }
 
       if (!navigator.geolocation) {
@@ -829,8 +837,11 @@
             msg = "Location request timed out.";
           }
           showHospitalError(msg);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+        }, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000
+        }
       );
     }
 
@@ -840,109 +851,103 @@
       document.getElementById("hospitalErrorMessage").textContent = message;
     }
 
-    async function findNearbyHospitals(lat,lng){
-      const loadingText=document.getElementById("hospitalLoadingText");
+    async function findNearbyHospitals(lat, lng) {
+      const loadingText = document.getElementById("hospitalLoadingText");
 
-      loadingText.innerHTML=`
+      loadingText.innerHTML = `
         <i class="fa-solid fa-spinner fa-spin me-1 text-danger"></i>
         Searching for nearby hospitals…
       `;
 
-      const params=new URLSearchParams({
-        categories:"healthcare.hospital",
-        filter:`circle:${lng},${lat},10000`,
-        bias:`proximity:${lng},${lat}`,
-        limit:"10",
-        lang:"en",
-        apiKey:GEOAPIFY_API_KEY
+      const params = new URLSearchParams({
+        categories: "healthcare.hospital",
+        filter: `circle:${lng},${lat},10000`,
+        bias: `proximity:${lng},${lat}`,
+        limit: "10",
+        lang: "en",
+        apiKey: GEOAPIFY_API_KEY
       });
 
-      const url=`https://api.geoapify.com/v2/places?${params.toString()}`;
+      const url = `https://api.geoapify.com/v2/places?${params.toString()}`;
 
-      try{
-        const response=await fetch(url);
+      try {
+        const response = await fetch(url);
 
-        if(!response.ok){
+        if (!response.ok) {
           throw new Error(`Geoapify error: ${response.status}`);
         }
 
-        const data=await response.json();
-        const features=data.features||[];
+        const data = await response.json();
+        const features = data.features || [];
 
-        if(features.length===0){
+        if (features.length === 0) {
           showHospitalError(
             "No hospitals were found within 10 km. Try again or open your maps application."
           );
           return;
         }
 
-        const hospitals=features.map(feature=>{
-          const properties=feature.properties||{};
-          const coordinates=feature.geometry?.coordinates||[];
+        const hospitals = features.map(feature => {
+          const properties = feature.properties || {};
+          const coordinates = feature.geometry?.coordinates || [];
 
-          const hospitalLat=Number(
-            properties.lat??coordinates[1]
+          const hospitalLat = Number(
+            properties.lat ?? coordinates[1]
           );
 
-          const hospitalLng=Number(
-            properties.lon??coordinates[0]
+          const hospitalLng = Number(
+            properties.lon ?? coordinates[0]
           );
 
-          const distanceMeters=
-            Number(properties.distance)||
+          const distanceMeters =
+            Number(properties.distance) ||
             calculateHaversineDistance(
               lat,
               lng,
               hospitalLat,
               hospitalLng
-            )*1000;
+            ) * 1000;
 
-          return{
-            name:
-              properties.name||
-              properties.address_line1||
+          return {
+            name: properties.name ||
+              properties.address_line1 ||
               "Hospital",
 
-            latitude:hospitalLat,
-            longitude:hospitalLng,
+            latitude: hospitalLat,
+            longitude: hospitalLng,
 
-            type:"Hospital",
+            type: "Hospital",
 
-            address:
-              properties.formatted||
-              [properties.address_line1,properties.address_line2]
-                .filter(Boolean)
-                .join(", ")||
+            address: properties.formatted || [properties.address_line1, properties.address_line2]
+              .filter(Boolean)
+              .join(", ") ||
               "Address unavailable",
 
-            phone:
-              properties.contact?.phone||
-              properties.phone||
+            phone: properties.contact?.phone ||
+              properties.phone ||
               "",
 
-            website:
-              properties.contact?.website||
-              properties.website||
+            website: properties.contact?.website ||
+              properties.website ||
               "",
 
-            placeId:properties.place_id||"",
+            placeId: properties.place_id || "",
 
-            straightDistance:distanceMeters/1000,
+            straightDistance: distanceMeters / 1000,
             distanceMeters,
 
-            durationSeconds:
-              (distanceMeters/1000/40)*3600
+            durationSeconds: (distanceMeters / 1000 / 40) * 3600
           };
-        }).filter(hospital=>
-          Number.isFinite(hospital.latitude)&&
+        }).filter(hospital =>
+          Number.isFinite(hospital.latitude) &&
           Number.isFinite(hospital.longitude)
         );
 
         hospitals.sort(
-          (a,b)=>a.distanceMeters-b.distanceMeters
+          (a, b) => a.distanceMeters - b.distanceMeters
         );
 
-        const finalHospitals=hospitals.slice(0,5);
+        const finalHospitals = hospitals.slice(0, 5);
 
         document
           .getElementById("hospitalLoadingState")
@@ -953,7 +958,7 @@
 
         loadMoreHospitals();
 
-      }catch(error){
+      } catch (error) {
         console.error(
           "Geoapify hospital search failed:",
           error
@@ -965,38 +970,38 @@
       }
     }
 
-    function normalizePhoneForCall(phone){
-      return String(phone||"").trim().replace(/[^\d+]/g,"");
+    function normalizePhoneForCall(phone) {
+      return String(phone || "").trim().replace(/[^\d+]/g, "");
     }
 
-    function normalizePhoneForWhatsApp(phone){
-      let cleaned=String(phone||"").replace(/\D/g,"");
-      if(cleaned.startsWith("00"))cleaned=cleaned.substring(2);
+    function normalizePhoneForWhatsApp(phone) {
+      let cleaned = String(phone || "").replace(/\D/g, "");
+      if (cleaned.startsWith("00")) cleaned = cleaned.substring(2);
       return cleaned;
     }
 
-    function callHospital(phone,hospitalName){
-      const cleanPhone=normalizePhoneForCall(phone);
-      if(!cleanPhone){
-        displaySystemMessage?.(`No phone number is available for ${hospitalName}.`,"warning");
+    function callHospital(phone, hospitalName) {
+      const cleanPhone = normalizePhoneForCall(phone);
+      if (!cleanPhone) {
+        displaySystemMessage?.(`No phone number is available for ${hospitalName}.`, "warning");
         return;
       }
-      window.location.href=`tel:${cleanPhone}`;
+      window.location.href = `tel:${cleanPhone}`;
     }
 
-    function shareSummaryToHospitalWhatsApp(phone,hospitalName){
-      const cleanPhone=normalizePhoneForWhatsApp(phone);
-      if(!cleanPhone){
-        displaySystemMessage?.(`No WhatsApp-compatible number is available for ${hospitalName}.`,"warning");
+    function shareSummaryToHospitalWhatsApp(phone, hospitalName) {
+      const cleanPhone = normalizePhoneForWhatsApp(phone);
+      if (!cleanPhone) {
+        displaySystemMessage?.(`No WhatsApp-compatible number is available for ${hospitalName}.`, "warning");
         return;
       }
 
-      selectedHospitalName=hospitalName;
-      selectedHospitalPhone=phone;
-      const summary=buildEmergencySummary();
-      const message=`Hello ${hospitalName},\n\n${summary}\n\nPlease let us know if the child can be received for urgent medical evaluation.`;
+      selectedHospitalName = hospitalName;
+      selectedHospitalPhone = phone;
+      const summary = buildEmergencySummary();
+      const message = `Hello ${hospitalName},\n\n${summary}\n\nPlease let us know if the child can be received for urgent medical evaluation.`;
 
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`,"_blank");
+      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
     }
 
     function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
@@ -1004,8 +1009,8 @@
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
       const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     }
@@ -1016,10 +1021,10 @@
       return temp.innerHTML;
     }
 
-    function renderNearbyHospitals(hospitals, append=false) {
+    function renderNearbyHospitals(hospitals, append = false) {
       const container = document.getElementById("nearbyHospitalsList");
-      if(!append){
-          container.innerHTML = "";
+      if (!append) {
+        container.innerHTML = "";
       }
 
       if (!hospitals || hospitals.length === 0) {
@@ -1030,21 +1035,22 @@
       hospitals.forEach((h, index) => {
         const km = (h.distanceMeters / 1000).toFixed(1);
         const mins = Math.max(1, Math.round(h.durationSeconds / 60));
-        const isClosest = index === 0;
-        const safeName=sanitizeText(h.name);
-        const safeType=sanitizeText(h.type);
-        const safeAddress=sanitizeText(h.address);
-        const phone=h.phone||"";
-        const safePhone=sanitizeText(phone);
-        const jsName=JSON.stringify(
-          String(h.name||"Hospital")
+        const hospitalPosition = (append ? displayedHospitals : 0) + index;
+        const isClosest = hospitalPosition === 0;
+        const safeName = sanitizeText(h.name);
+        const safeType = sanitizeText(h.type);
+        const safeAddress = sanitizeText(h.address);
+        const phone = h.phone || "";
+        const safePhone = sanitizeText(phone);
+        const jsName = JSON.stringify(
+          String(h.name || "Hospital")
         );
 
-        const jsPhone=JSON.stringify(
-          String(phone||"")
+        const jsPhone = JSON.stringify(
+          String(phone || "")
         );
 
-        const cardHtml=`
+        const cardHtml = `
         <div class="col-md-6">
           <div class="p-3 hospital-card ${isClosest?"closest-hospital":""} h-100 d-flex flex-column justify-content-between">
             <div>
@@ -1109,86 +1115,92 @@
         container.innerHTML += cardHtml;
       });
 
-      if(hospitals.length>0&&!selectedHospitalName){
-        selectedHospitalName=hospitals[0].name;
-        selectedHospitalPhone=hospitals[0].phone||null;
-        selectedHospitalDuration=Math.max(1,Math.round(hospitals[0].durationSeconds/60));
+      if (hospitals.length > 0 && !selectedHospitalName) {
+        selectedHospitalName = hospitals[0].name;
+        selectedHospitalPhone = hospitals[0].phone || null;
+        selectedHospitalDuration = Math.max(1, Math.round(hospitals[0].durationSeconds / 60));
       }
-      if(activeHospitalAssessment){
+      if (activeHospitalAssessment) {
         buildEmergencySummary();
       }
     }
 
-    function navigateToHospital(lat,lng,hospitalName,hospitalPhone,durationMinutes){
-      selectedHospitalName=hospitalName||"Selected hospital";
-      selectedHospitalPhone=hospitalPhone||null;
-      selectedHospitalDuration=durationMinutes||null;
-      if(activeHospitalAssessment){
+    function navigateToHospital(lat, lng, hospitalName, hospitalPhone, durationMinutes) {
+      selectedHospitalName = hospitalName || "Selected hospital";
+      selectedHospitalPhone = hospitalPhone || null;
+      selectedHospitalDuration = durationMinutes || null;
+      if (activeHospitalAssessment) {
         buildEmergencySummary();
       }
 
-      const origin=currentUserLatitude&&currentUserLongitude
-        ? `&origin=${currentUserLatitude},${currentUserLongitude}`
-        :"";
+      const origin = currentUserLatitude && currentUserLongitude ?
+        `&origin=${currentUserLatitude},${currentUserLongitude}` :
+        "";
 
-      const navUrl=`https://www.google.com/maps/dir/?api=1${origin}&destination=${lat},${lng}&travelmode=driving`;
-      window.open(navUrl,"_blank","noopener");
+      const navUrl = `https://www.google.com/maps/dir/?api=1${origin}&destination=${lat},${lng}&travelmode=driving`;
+      window.open(navUrl, "_blank", "noopener");
     }
 
-    function buildEmergencySummary(){
-      const summaryEl=document.getElementById("doctorEmergencySummary");
-      let summaryText="";
+    function buildEmergencySummary() {
+      const summaryEl = document.getElementById("doctorEmergencySummary");
+      let summaryText = "";
 
-      if(!activeHospitalAssessment){
-        summaryText=
-    `CARENEST HOSPITAL VISIT NOTE
+      if (!activeHospitalAssessment) {
+        summaryText =
+          `CARENEST HOSPITAL VISIT NOTE
 
     No CareNest assessment has been completed or selected for this hospital search.
 
     `;
-      }else{
-        const child=activeHospitalChild;
-        const childName=child?(child.child_name||child.name||"Child"):"Child";
-        const ageStr=getChildAgeText(child?.dob);
-        const dateStr=activeHospitalAssessment.assessment_date||
-          activeHospitalAssessment.date||
+      } else {
+        const child = activeHospitalChild;
+        const childName = child ? (child.child_name || child.name || "Child") : "Child";
+        const ageStr = getChildAgeText(child?.dob);
+        const dateStr = activeHospitalAssessment.assessment_date ||
+          activeHospitalAssessment.date ||
           new Date().toLocaleString();
 
-        const severity=activeHospitalAssessment.severity||"Not stated";
-        const conditions=child?.previous_diagnoses||"None reported";
-        const recommendation=activeHospitalAssessment.recommendation||
+        const severity = activeHospitalAssessment.severity || "Not stated";
+        const conditions = child?.previous_diagnoses || "None reported";
+        const recommendation = activeHospitalAssessment.recommendation ||
           "Please evaluate the child based on the reported symptoms.";
 
-        const warningSigns=extractAssessmentWarningSigns(activeHospitalAssessment);
-
-        summaryText=
-    `CARENEST EMERGENCY ASSESSMENT SUMMARY
+        summaryText =
+          `CARENEST EMERGENCY ASSESSMENT SUMMARY
 
     Child: ${childName}
     Age: ${ageStr}
     Assessment time: ${dateStr}
     Risk level: ${severity}
 
-    Reported warning signs:
-    ${warningSigns}
+    Existing medical conditions: ${conditions}
 
-    Existing medical conditions:
-    - ${conditions}
+    CareNest recommendation: ${recommendation}
 
-    CareNest recommendation:
-    ${recommendation}
-
-    Selected hospital:
-    ${selectedHospitalName||"Not selected"}
-
+    Selected hospital: ${selectedHospitalName||"Not selected"}
     ${selectedHospitalDuration?`Estimated driving time: Approximately ${selectedHospitalDuration} minutes\n`:""}
-    Please evaluate the child urgently.
-
-    CareNest provides health guidance and does not make a medical diagnosis.`;
+    Please evaluate the child urgently.`;
       }
 
-      if(summaryEl)summaryEl.value=summaryText;
+      summaryText = summaryText.replace(/^ {4}/gm, "");
+
+      if (summaryEl) {
+        const summaryHtml = escapeSummaryHtml(summaryText).replace(
+          /^([ \t]*)(CARENEST EMERGENCY ASSESSMENT SUMMARY|Child:|Age:|Assessment time:|Risk level:|Existing medical conditions:|CareNest recommendation:|Selected hospital:|Estimated driving time:)/gm,
+          "$1<strong>$2</strong>"
+        );
+        summaryEl.innerHTML = summaryHtml;
+      }
       return summaryText;
+    }
+
+    function escapeSummaryHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
 
@@ -1206,121 +1218,124 @@
     }
 
     function fallbackCopy(text) {
-      const textarea = document.getElementById("doctorEmergencySummary");
-      if (textarea) {
-        textarea.select();
-        document.execCommand('copy');
-        if (typeof displaySystemMessage === 'function') {
-          displaySystemMessage("Emergency summary copied!", "success");
-        }
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+      if (typeof displaySystemMessage === "function") {
+        displaySystemMessage("Emergency summary copied!", "success");
       }
     }
 
     function shareEmergencySummaryWhatsApp() {
-      if(!activeHospitalAssessment){
+      if (!activeHospitalAssessment) {
         return;
-    }
+      }
       const summaryText = buildEmergencySummary();
       const waUrl = `https://wa.me/?text=${encodeURIComponent(summaryText)}`;
       window.open(waUrl, '_blank');
     }
 
 
-    function getChildAgeText(dob){
-      if(!dob)return "Unknown";
-      const birth=new Date(dob);
-      if(Number.isNaN(birth.getTime()))return "Unknown";
+    function getChildAgeText(dob) {
+      if (!dob) return "Unknown";
+      const birth = new Date(dob);
+      if (Number.isNaN(birth.getTime())) return "Unknown";
 
-      const today=new Date();
-      let years=today.getFullYear()-birth.getFullYear();
-      let months=today.getMonth()-birth.getMonth();
+      const today = new Date();
+      let years = today.getFullYear() - birth.getFullYear();
+      let months = today.getMonth() - birth.getMonth();
 
-      if(today.getDate()<birth.getDate())months--;
-      if(months<0){
+      if (today.getDate() < birth.getDate()) months--;
+      if (months < 0) {
         years--;
-        months+=12;
+        months += 12;
       }
 
-      if(years<1)return `${Math.max(0,months)} months`;
+      if (years < 1) return `${Math.max(0,months)} months`;
       return `${years} year${years===1?"":"s"}`;
     }
 
-    function safelyParseJson(value){
-      if(!value)return null;
-      if(typeof value==="object")return value;
+    function safelyParseJson(value) {
+      if (!value) return null;
+      if (typeof value === "object") return value;
 
-      try{
+      try {
         return JSON.parse(value);
-      }catch(error){
+      } catch (error) {
         return null;
       }
     }
 
-    function extractAssessmentWarningSigns(assessment){
-      const questions=safelyParseJson(
-        assessment.questions_json||
+    function extractAssessmentWarningSigns(assessment) {
+      const questions = safelyParseJson(
+        assessment.questions_json ||
         assessment.questions
       );
 
-      const answers=safelyParseJson(
-        assessment.answers_json||
-        assessment.answers||
+      const answers = safelyParseJson(
+        assessment.answers_json ||
+        assessment.answers ||
         assessment.symptoms_json
       );
 
-      if(!answers)return "- Symptoms were assessed, but detailed answers are unavailable.";
+      if (!answers) return "- Symptoms were assessed, but detailed answers are unavailable.";
 
-      const lines=[];
+      const lines = [];
 
-      if(Array.isArray(answers)){
-        answers.forEach((answer,index)=>{
-          const value=typeof answer==="object"
-            ? answer.answer||answer.value||answer.response
-            : answer;
+      if (Array.isArray(answers)) {
+        answers.forEach((answer, index) => {
+          const value = typeof answer === "object" ?
+            answer.answer || answer.value || answer.response :
+            answer;
 
-          if(value===undefined||value===null||String(value).trim()==="")return;
+          if (value === undefined || value === null || String(value).trim() === "") return;
 
-          const question=Array.isArray(questions)
-            ? questions[index]?.question||questions[index]?.text||`Question ${index+1}`
-            : `Question ${index+1}`;
+          const question = Array.isArray(questions) ?
+            questions[index]?.question || questions[index]?.text || `Question ${index+1}` :
+            `Question ${index+1}`;
 
           lines.push(`- ${question}: ${value}`);
         });
-      }else{
-        Object.entries(answers).forEach(([key,value])=>{
-          if(value===undefined||value===null||String(value).trim()==="")return;
+      } else {
+        Object.entries(answers).forEach(([key, value]) => {
+          if (value === undefined || value === null || String(value).trim() === "") return;
 
-          const readableKey=key
-            .replace(/_/g," ")
-            .replace(/\b\w/g,char=>char.toUpperCase());
+          const readableKey = key
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, char => char.toUpperCase());
 
           lines.push(`- ${readableKey}: ${typeof value==="object"?JSON.stringify(value):value}`);
         });
       }
 
-      return lines.length
-        ?lines.join("\n")
-        :"- No detailed warning signs were saved.";
+      return lines.length ?
+        lines.join("\n") :
+        "- No detailed warning signs were saved.";
     }
 
 
 
-//function to share the emergency summary using the Web Share API 
-    async function shareEmergencySummary(){
-      if(!activeHospitalAssessment){
+    //function to share the emergency summary using the Web Share API
+    async function shareEmergencySummary() {
+      if (!activeHospitalAssessment) {
         return;
-    }
-      const summary=buildEmergencySummary();
+      }
+      const summary = buildEmergencySummary();
 
-      if(navigator.share){
-        try{
+      if (navigator.share) {
+        try {
           await navigator.share({
-            title:"CareNest Emergency Summary",
-            text:summary
+            title: "CareNest Emergency Summary",
+            text: summary
           });
-        }catch(error){
-          if(error.name!=="AbortError"){
-            console.error("Sharing failed:",error);
+        } catch (error) {
+          if (error.name !== "AbortError") {
+            console.error("Sharing failed:", error);
           }
         }
         return;
@@ -1333,10 +1348,10 @@
       );
     }
 
-    function loadMoreHospitals(){
+    function loadMoreHospitals() {
       const next = allNearbyHospitals.slice(
-          displayedHospitals,
-          displayedHospitals + 2
+        displayedHospitals,
+        displayedHospitals + 2
       );
 
       renderNearbyHospitals(next, true);
@@ -1344,11 +1359,12 @@
       displayedHospitals += next.length;
 
       document.getElementById("loadMoreHospitalsBtn")
-          .classList.toggle(
-              "d-none",
-              displayedHospitals >= allNearbyHospitals.length
-          );
-  }
+        .classList.toggle(
+          "d-none",
+          displayedHospitals >= allNearbyHospitals.length
+        );
+    }
   </script>
 </body>
+
 </html>

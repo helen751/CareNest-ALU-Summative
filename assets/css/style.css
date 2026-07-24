@@ -434,3 +434,11 @@ body {
     padding: 24px 18px;
   }
 }
+
+.dt-container .dt-paging .pagination {
+  --bs-pagination-color: var(--primary);
+  --bs-pagination-hover-color: var(--primary-dark);
+  --bs-pagination-focus-color: var(--primary-dark);
+  --bs-pagination-active-bg: var(--primary);
+  --bs-pagination-active-border-color: var(--primary);
+}

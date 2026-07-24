@@ -1,3 +1,7 @@
+<?php
+session_start();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +30,7 @@
 
   <nav class="navbar navbar-expand-lg main-nav py-3" id="publicNavbar">
     <div class="container">
-      <a class="brand-logo-container" href="index.html">
+      <a class="brand-logo-container" href="index.php">
         <div class="brand-logo-frame">
           <img src="assets/images/logo.png" width="80" height="75" alt="Logo">
         </div>
@@ -40,10 +44,25 @@
       <div class="collapse navbar-collapse" id="navContent">
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
           <li class="nav-item">
-            <a class="nav-link text-dark px-3 fw-semibold active" href="index.html">
+            <a class="nav-link text-dark px-3 fw-semibold active" href="index.php">
               <i class="fa-solid fa-house me-1"></i> Home
             </a>
           </li>
+          <?php
+          if (isset($_SESSION['user_id'])) {
+              echo '<li class="nav-item me-2">
+            <a class="btn btn-secondary-custom my-1 px-4" href="dashboard.php">
+              <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-primary-custom my-1 px-4" onclick="handleLogout()">
+              <i class="fa-solid fa-user-plus me-1"></i> Logout
+            </a>
+          </li>';
+          }
+          else{
+          ?>
           <li class="nav-item me-2">
             <a class="btn btn-secondary-custom my-1 px-4" href="login.html">
               <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In
@@ -54,6 +73,7 @@
               <i class="fa-solid fa-user-plus me-1"></i> Register
             </a>
           </li>
+          <?php } ?>
         </ul>
       </div>
     </div>
@@ -309,5 +329,6 @@
 
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/app.js"></script>
 </body>
 </html>

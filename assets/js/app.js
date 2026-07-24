@@ -5,6 +5,7 @@ let assessmentsList = [];
 let appointmentsList = [];
 let selectedAssessmentId = null;
 
+// function to detect user's country for profile using GPS and fallback to IP lookup
 async function detectCountryForProfile() {
     const btn = document.getElementById('btnUpdateCountry');
     const status = document.getElementById('countryStatus');
@@ -72,6 +73,8 @@ async function detectCountryForProfile() {
     }
   }
 
+
+// function to load dashboard data from the server and update the UI
 async function loadDashboardData() {
   try {
     const response = await fetch("process.php?action=get_dashboard");
@@ -153,7 +156,7 @@ function calculateAge(dobStr) {
     return `${days} day${days !== 1 ? "s" : ""}`;
 }
 
-
+// function to handle user logout and redirect to login page
 async function handleLogout() {
   try {
     await fetch("process.php?action=logout");
@@ -163,7 +166,7 @@ async function handleLogout() {
 }
 
 let wellbeingChartInstance = null;
-
+// function to render the wellbeing chart using Chart.js
 function renderWellbeingChart() {
   const ctx = document.getElementById("wellbeingChart");
 
@@ -381,6 +384,7 @@ function renderRecentAssessments() {
 
   if (!table) return;
 
+  destroyDataTable("recentAssessmentsDataTable");
   table.innerHTML = "";
 
   if (assessmentsList.length === 0) {
@@ -453,6 +457,31 @@ function renderRecentAssessments() {
         </td>
       </tr>
     `;
+  });
+
+  initializeDataTable("recentAssessmentsDataTable", 5, {
+    order: [[1, "desc"]],
+    columnDefs: [{ orderable: false, targets: 4 }]
+  });
+}
+
+function destroyDataTable(tableId) {
+  if (
+    window.jQuery &&
+    jQuery.fn.DataTable &&
+    jQuery.fn.dataTable.isDataTable(`#${tableId}`)
+  ) {
+    jQuery(`#${tableId}`).DataTable().destroy();
+  }
+}
+
+function initializeDataTable(tableId, pageLength, options = {}) {
+  if (!window.jQuery || !jQuery.fn.DataTable) return;
+
+  jQuery(`#${tableId}`).DataTable({
+    pageLength,
+    lengthChange: false,
+    ...options
   });
 }
 
@@ -553,6 +582,7 @@ function renderChildHistory(childId) {
 
     if (!historyTable) return;
 
+    destroyDataTable("childHistoryDataTable");
     historyTable.innerHTML = "";
 
     const history = assessmentsList.filter(
@@ -571,6 +601,10 @@ function renderChildHistory(childId) {
     }
 
     history.forEach(item => {
+        const recommendation = String(item.recommendation || "");
+        const recommendationPreview = recommendation.length > 100
+            ? `${recommendation.slice(0, 100)}...`
+            : recommendation;
 
         let badge = `
             <span class="badge bg-success-subtle text-success">
@@ -598,11 +632,23 @@ function renderChildHistory(childId) {
             <tr>
                 <td>${item.date}</td>
                 <td>${badge}</td>
-                <td>${item.recommendation}</td>
+                <td>
+                    <span class="d-block mb-2">${recommendationPreview}</span>
+                    <button
+                        class="btn btn-secondary-custom btn-sm"
+                        onclick="loadSingleResult(${item.assessment_id})"
+                    >
+                        <i class="fa-solid fa-file-invoice me-1"></i>
+                        View Full Report
+                    </button>
+                </td>
             </tr>
         `;
     });
 
+    initializeDataTable("childHistoryDataTable", 3, {
+      order: [[0, "desc"]]
+    });
 }
 
 function accessChildProfile(childId) {
@@ -840,22 +886,10 @@ async function beginAssessmentWizard() {
     }
 
     assessmentQuestions = result.questions;
-
-    assessmentAnswers = new Array(
-      assessmentQuestions.length
-    ).fill(null);
-
-    document.getElementById(
-      "assessmentLoading"
-    ).style.display = "none";
-
-    document.getElementById(
-      "dynamicQuestionCard"
-    ).style.display = "block";
-
-    document.getElementById(
-      "wizardNavigation"
-    ).style.display = "flex";
+    assessmentAnswers = new Array(assessmentQuestions.length).fill(null);
+    document.getElementById("assessmentLoading").style.display = "none";
+    document.getElementById("dynamicQuestionCard").style.display = "block";
+    document.getElementById("wizardNavigation").style.display = "flex";
 
     showStep(0);
   } catch (error) {
@@ -1246,8 +1280,12 @@ function loadResultScreen(severity, recommendation, iconClass, dateString, asses
     selectedAssessmentId = Date.now(); // Fallback ID if not provided dynamically
   }
   
-  // Clear any previous satisfaction stars selection
-  resetSatisfactionStars();
+  const assessment = assessmentsList.find(
+    item => Number(item.assessment_id) === Number(selectedAssessmentId)
+  );
+
+  // Restore the saved satisfaction stars for this assessment
+  resetSatisfactionStars(assessment?.satisfaction_rating);
 
   document.getElementById("resultTitle").textContent = `${severity} Risk Level`;
   document.getElementById("resultDescription").textContent = recommendation;
@@ -1287,9 +1325,11 @@ function loadResultScreen(severity, recommendation, iconClass, dateString, asses
   switchDashSection("dashResult");
 }
 
-function resetSatisfactionStars() {
-  document.querySelectorAll(".star-rating-btn").forEach(star => {
-    star.className = "fa-regular fa-star star-rating-btn";
+function resetSatisfactionStars(ratingValue = 0) {
+  document.querySelectorAll(".star-rating-btn").forEach((star, idx) => {
+    star.className = idx < Number(ratingValue)
+      ? "fa-solid fa-star star-rating-btn text-warning"
+      : "fa-regular fa-star star-rating-btn";
   });
   document.getElementById("ratingFeedbackStatus").textContent = "";
 }
@@ -1318,6 +1358,12 @@ async function handlePostAssessmentRating(ratingValue) {
     
     const result = await response.json();
     if (result.success) {
+      const assessment = assessmentsList.find(
+        item => Number(item.assessment_id) === Number(selectedAssessmentId)
+      );
+      if (assessment) {
+        assessment.satisfaction_rating = Number(ratingValue);
+      }
       feedbackStatus.className = "small fw-semibold text-success mt-1";
       feedbackStatus.textContent = "Thank you! Your feedback has been recorded.";
     } else {
@@ -1350,6 +1396,7 @@ function openAppointmentFromResult(){
   switchDashSection("dashAppointment");
 }
 
+// function to handle appointment booking form submission
 async function handleBookAppointment(event) {
   event.preventDefault();
 
@@ -1398,12 +1445,13 @@ async function handleBookAppointment(event) {
   }
 }
 
-
+// adding datatable to appointments list for a better user experience and sorting
 
 function renderAppointmentsList() {
   const list = document.getElementById("appointmentList");
   if (!list) return;
 
+  destroyDataTable("appointmentsDataTable");
   list.innerHTML = "";
 
   if (appointmentsList.length === 0) {
@@ -1424,9 +1472,14 @@ function renderAppointmentsList() {
         </tr>
       `;
     });
+
+    initializeDataTable("appointmentsDataTable", 5, {
+      order: [[1, "desc"]]
+    });
   }
 }
 
+// function to handle profile update form submission
 async function handleUpdateProfile(event) {
     event.preventDefault();
     const form = document.getElementById("profileForm");

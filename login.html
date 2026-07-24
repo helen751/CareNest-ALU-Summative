@@ -193,7 +193,7 @@
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         if (result.success) {
-          let countdown = 5;
+          let countdown = 2;
 
           Swal.fire({
             icon: 'success',
@@ -206,7 +206,7 @@
                 <strong id="redirectCount">${countdown}</strong> seconds...
               </p>
             `,
-            timer: 5000,
+            timer: 2000,
             timerProgressBar: true,
             showConfirmButton: false,
             allowOutsideClick: false,
