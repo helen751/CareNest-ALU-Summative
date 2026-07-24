@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Account - CareNest</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="assets/images/logo.png" type="image/x-icon">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <style>
+    /* Custom design for the registration page */
+    html, body {
+      height: 100%;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    .split-container {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .split-row {
+      flex: 1;
+    }
+    .side-image-panel {
+      position: relative;
+      min-height: 400px;
+    }
+    .side-image-panel img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .side-image-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(15, 92, 94, 0.85) 0%, rgba(15, 92, 94, 0.4) 100%);
+      z-index: 1;
+    }
+    .side-image-content {
+      position: absolute;
+      bottom: 10%;
+      left: 10%;
+      right: 10%;
+      z-index: 2;
+      max-width: 460px;
+    }
+    .form-panel {
+      background-color: var(--background);
+    }
+    .register-form-wrapper {
+      width: 100%;
+      max-width: 520px;
+    }
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg main-nav py-3">
+    <div class="container">
+      <a class="brand-logo-container" href="index.html">
+        <div class="brand-logo-frame">
+          <img src="assets/images/logo.png" alt="Logo" width="70" height="70">
+        </div>
+        <span class="brand-text">CareNest</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- main container -->
+  <main class="container-fluid p-0 flex-grow-1 d-flex flex-column split-container">
+    <div class="row g-0 flex-grow-1 split-row">
+      
+      <!-- Happy Family Image Panel on the left -->
+      <div class="col-lg-5 d-none d-lg-block side-image-panel">
+        <img src="assets/images/carem6.jpg" alt="Mother holding child happy">
+        <div class="side-image-overlay"></div>
+        <div class="side-image-content text-white">
+          <span class="badge text-uppercase mb-3 px-3 py-2" style="background-color: var(--accent); color: var(--text-color); font-weight:700;">
+            <i class="fa-solid fa-shield-heart me-1"></i> Trust & Reassurance
+          </span>
+          <h2 class="fw-bold mb-3 display-6">Create an Account and enjoy peace of mind</h2>
+        </div>
+      </div>
+
+      <!--  Registration Form Panel on the right -->
+      <div class="col-lg-7 d-flex flex-column justify-content-between form-panel py-5 px-4 px-md-5">
+        
+        <!-- Center Alert Notifications -->
+        <div class="container px-0 mb-4" id="alertContainer"></div>
+
+        <div class="d-flex align-items-center justify-content-center flex-grow-1">
+          <div class="register-form-wrapper">
+            <div class="card p-4 p-md-5 border-0 shadow-sm mb-4" style="border-radius: 20px; background-color: var(--white);">
+              
+              <!-- Step Progress Indicators -->
+              <div class="d-flex justify-content-center gap-2 mb-3">
+                <span id="indicatorStep1" class="badge rounded-pill" style="width: 24px; height: 6px; padding: 0; background-color: var(--accent); display: block;"></span>
+                <span id="indicatorStep2" class="badge rounded-pill bg-light" style="width: 24px; height: 6px; padding: 0; border: 1px solid var(--border); display: block;"></span>
+              </div>
+
+              <div class="text-center mb-4">
+                <div class="brand-logo-frame mx-auto mb-3" style="width: 56px; height: 56px; border-radius: 16px;">
+                  <i class="fa-solid fa-user-plus" style="font-size: 1.5rem;"></i>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">Create Account</h3>
+                <p class="text-muted small mb-0">Register to start your journey with us</p>
+              </div>
+
+              <!-- Form handling -->
+              <form id="registerForm" onsubmit="handleRegistration(event)">
+                
+                <!-- Hidden inputs to track geolocation and reverse-geocoded country for future PHP storage -->
+                <input type="hidden" id="userCountry" name="country" value="">
+
+                <!-- Parent Details -->
+                <div id="detailsStep">
+                  <div class="mb-3">
+                    <label for="regFullName" class="form-label fw-semibold small text-muted">Your Full Name</label>
+                    <input type="text" class="form-control py-2" id="regFullName" name="full_name" placeholder="e.g. Jessica Vance" required style="border-radius: 8px; border-color: var(--border);">
+                  </div>
+                  <div class="mb-3">
+                    <label for="regEmail" class="form-label fw-semibold small text-muted">Email Address</label>
+                    <input type="email" class="form-control py-2" id="regEmail" name="email" placeholder="jessica@example.com" required style="border-radius: 8px; border-color: var(--border);">
+                  </div>
+                  <div class="mb-3">
+                    <label for="regPassword" class="form-label fw-semibold small text-muted">Secure Password</label>
+                    <input type="password" class="form-control py-2" id="regPassword" name="password" minlength="6" placeholder="At least 6 characters" required style="border-radius: 8px; border-color: var(--border);">
+                  </div>
+                  
+                  <button type="button" class="btn btn-primary-custom w-100 py-2.5" onclick="validateDetailsStep()">
+                    Continue to Agreements <i class="fa-solid fa-chevron-right ms-2"></i>
+                  </button>
+                </div>
+
+                <!--  Agreements Checklist -->
+                <div id="checkboxesStep" class="d-none">
+                  
+                  <div class="alert alert-info py-2 px-3 mb-4 small d-flex align-items-center border-0" style="background-color: var(--secondary); color: var(--primary); border-radius: 10px;">
+                    <i class="fa-solid fa-circle-info me-2" style="font-size: 1.1rem;"></i> 
+                    <span>Agree to our expectations</span>
+                  </div>
+
+                  <!-- checklist items -->
+                  <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="regTerms" required>
+                    <label class="form-check-label text-muted small" for="regTerms">
+                      I understand this app serves as a supportive child health monitor.
+                    </label>
+                  </div>
+                  <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="regLocation" required onchange="handleLocationConsent(this)">
+                    <label class="form-check-label text-muted small" for="regLocation">
+                      I understand I need to give CareNest access to my location data. <span id="locationStatus" class="ms-1 fw-bold text-teal" style="font-size: 0.75rem;"></span>
+                    </label>
+                  </div>
+                  <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" id="regCorrectInfo" required>
+                    <label class="form-check-label text-muted small" for="regCorrectInfo">
+                      I understand I have to share my child's correct information.
+                    </label>
+                  </div>
+
+                  <div class="d-flex gap-3">
+                    <button type="button" class="btn btn-secondary-custom w-50 py-2.5" onclick="backToDetails()">
+                      <i class="fa-solid fa-chevron-left me-2"></i> Back
+                    </button>
+                    <button type="submit" class="btn btn-primary-custom w-50 py-2.5">
+                      <i class="fa-solid fa-user-check me-2"></i> Join CareNest
+                    </button>
+                  </div>
+                </div>
+
+              </form>
+              
+              <div class="text-center mt-4">
+                <p class="text-muted small mb-0">Already registered? <a href="login.html" class="fw-semibold text-decoration-none" style="color: var(--primary);">Sign In &rarr;</a></p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!--  Footer -->
+        <footer class="text-center pt-4 border-top" style="border-color: var(--border);">
+          <p class="text-muted small mb-1">&copy; 2026 CareNest. All rights reserved.</p>
+        </footer>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Progressive Step Validation Logic for the register form -->
+  <script src="assets/js/app.js"></script>
+  <script>
+    function validateDetailsStep() {
+      const fullName = document.getElementById('regFullName');
+      const email = document.getElementById('regEmail');
+      const password = document.getElementById('regPassword');
+      
+      // Trigger native browser tooltip validations if empty
+      if (!fullName.value || !email.value || !password.value) {
+        fullName.reportValidity() || email.reportValidity() || password.reportValidity();
+        return;
+      }
+      
+      
+      if (password.value.length < 6) {
+        password.reportValidity();
+        return;
+      }
+
+      // Transition views
+      document.getElementById('detailsStep').classList.add('d-none');
+      document.getElementById('checkboxesStep').classList.remove('d-none');
+
+      // Update Step Indicators
+      document.getElementById('indicatorStep1').className = 'badge rounded-pill bg-light';
+      document.getElementById('indicatorStep1').style.border = '1px solid var(--border)';
+      document.getElementById('indicatorStep2').className = 'badge rounded-pill';
+      document.getElementById('indicatorStep2').style.backgroundColor = 'var(--accent)';
+      document.getElementById('indicatorStep2').style.border = 'none';
+    }
+
+    function backToDetails() {
+      document.getElementById('checkboxesStep').classList.add('d-none');
+      document.getElementById('detailsStep').classList.remove('d-none');
+
+      // Reset Step Indicators
+      document.getElementById('indicatorStep1').className = 'badge rounded-pill';
+      document.getElementById('indicatorStep1').style.backgroundColor = 'var(--accent)';
+      document.getElementById('indicatorStep1').style.border = 'none';
+      document.getElementById('indicatorStep2').className = 'badge rounded-pill bg-light';
+      document.getElementById('indicatorStep2').style.border = '1px solid var(--border)';
+    }
+
+    // Geolocation and Reverse Geocoding to detect user's country for registration
+    function handleLocationConsent(checkbox) {
+      const statusSpan = document.getElementById('locationStatus');
+      const countryInput = document.getElementById('userCountry');
+
+      if (!checkbox.checked) {
+        statusSpan.textContent = "";
+        countryInput.value = "";
+        return;
+      }
+
+      statusSpan.className = "ms-1 text-muted";
+      statusSpan.textContent = "(Accessing GPS...)";
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async function (position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            try {
+              // Fetch reverse geocoded country from OpenStreetMap API
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=3&addressdetails=1`);
+              const data = await res.json();
+              
+              if (data && data.address && data.address.country) {
+                const detectedCountry = data.address.country;
+                countryInput.value = detectedCountry;
+                statusSpan.className = "ms-1 fw-bold text-success";
+                statusSpan.textContent = `(Detected: ${detectedCountry})`;
+              } else {
+                fallbackIPLookup();
+              }
+            } catch (err) {
+              fallbackIPLookup();
+            }
+          },
+          function (error) {
+            // Fallback automatically to IP country location if browser geolocation fails or is denied
+            fallbackIPLookup();
+          }
+        );
+      } else {
+        fallbackIPLookup();
+      }
+    }
+
+    // IP-based Country Location Lookup to ensure a location is always provided for registration
+    async function fallbackIPLookup() {
+      const statusSpan = document.getElementById('locationStatus');
+      const countryInput = document.getElementById('userCountry');
+      
+      statusSpan.className = "ms-1 text-muted";
+      statusSpan.textContent = "(Verifying IP...)";
+
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        if (data && data.country_name) {
+          countryInput.value = data.country_name;
+          statusSpan.className = "ms-1 fw-bold text-success";
+          statusSpan.textContent = `(Located: ${data.country_name})`;
+        } else {
+          statusSpan.className = "ms-1 text-warning";
+          statusSpan.textContent = "(Default: Global)";
+          countryInput.value = "Unknown";
+        }
+      } catch (err) {
+        statusSpan.className = "ms-1 text-warning";
+        statusSpan.textContent = "(Default: Global)";
+        countryInput.value = "Unknown";
+      }
+    }
+
+    // form submission to php backend
+    async function handleRegistration(event) {
+      event.preventDefault();
+      
+      const countryInput = document.getElementById('userCountry');
+      
+      // wait for geolocation or IP lookup if country is not yet set
+      if (!countryInput.value) {
+        await fallbackIPLookup();
+      }
+
+      // Display SweetAlert Loading State
+      Swal.fire({
+        title: 'Creating Account...',
+        text: 'Please wait while we secure your profile inside the database.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Build data package for PHP backend processing
+      const formElement = document.getElementById('registerForm');
+      const formData = new FormData(formElement);
+
+      try {
+        // Send registration request directly to process.php using Fetch API
+        const response = await fetch('process.php?action=register', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+
+        if (result.success) {
+          // Success SweetAlert confirmation
+          Swal.fire({
+            title: 'Account Created!',
+            text: result.message || 'Welcome to CareNest! Would you like to proceed to adding your child now?',
+            icon: 'success',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Add Child Now',
+            cancelButtonText: 'Later (Go to Login)',
+            confirmButtonColor: '#0F5C5E',
+            cancelButtonColor: '#6c757d'
+          }).then((choice) => {
+            if (choice.isConfirmed) {
+              // Direct user straight to dashboard and pass the add child parameter
+              window.location.href = 'dashboard.php?action=addChild';
+            } else {
+              // Take them directly to the login page
+              window.location.href = 'login.html';
+            }
+          });
+        } else {
+          // Error SweetAlert popup
+          Swal.fire({
+            title: 'Registration Failed',
+            text: result.message || 'Failed to complete registration. Please review your entries.',
+            icon: 'error',
+            confirmButtonColor: '#0F5C5E'
+          });
+        }
+      } catch (error) {
+        console.error("Submission failed:", error);
+        // Error SweetAlert popup for server/connection error
+        Swal.fire({
+          title: 'Connection Error',
+          text: 'Could not connect to the server. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#0F5C5E'
+        });
+      }
+    }
+  </script>
+
+  <!-- SweetAlert2 Library Script -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+</body>
+</html>
