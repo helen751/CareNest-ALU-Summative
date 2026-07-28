@@ -101,6 +101,24 @@ async function loadDashboardData() {
 }
 
 function displaySystemMessage(text, type = "success") {
+  if (typeof Swal !== "undefined") {
+    const icon = type === "danger" ? "error" : type;
+    const titles = {
+      success: "Success",
+      error: "Unable to Complete",
+      warning: "Please Check",
+      info: "Information"
+    };
+
+    Swal.fire({
+      title: titles[icon] || "CareNest",
+      text,
+      icon,
+      confirmButtonColor: "#0F5C5E"
+    });
+    return;
+  }
+
   const container = document.getElementById("alertContainer");
   if (!container) return;
   
@@ -122,7 +140,37 @@ function displaySystemMessage(text, type = "success") {
 
 function calculateAge(dobStr) {
     const today = new Date();
-    const dob = new Date(dobStr);
+    today.setHours(0, 0, 0, 0);
+    const dob = parseProfileDate(dobStr);
+
+    if (!dob) return "Unknown";
+
+    if (dob > today) {
+        let monthsUntil = 0;
+        while (
+          addCalendarMonths(today, monthsUntil + 1) <= dob
+        ) {
+          monthsUntil++;
+        }
+
+        const monthAnchor = addCalendarMonths(today, monthsUntil);
+        const daysUntil = Math.max(
+          0,
+          Math.round((dob - monthAnchor) / 86400000)
+        );
+        const parts = [];
+
+        if (monthsUntil > 0) {
+          parts.push(
+            `${monthsUntil} month${monthsUntil === 1 ? "" : "s"}`
+          );
+        }
+        if (daysUntil > 0) {
+          parts.push(`${daysUntil} day${daysUntil === 1 ? "" : "s"}`);
+        }
+
+        return `Expected in: ${parts.join(" ") || "less than a day"}`;
+    }
 
     let years = today.getFullYear() - dob.getFullYear();
     let months = today.getMonth() - dob.getMonth();
@@ -154,6 +202,122 @@ function calculateAge(dobStr) {
     }
 
     return `${days} day${days !== 1 ? "s" : ""}`;
+}
+
+function parseProfileDate(dateString) {
+  const parts = String(dateString || "").split("-").map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (
+    date.getFullYear() !== parts[0] ||
+    date.getMonth() !== parts[1] - 1 ||
+    date.getDate() !== parts[2]
+  ) {
+    return null;
+  }
+
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function addCalendarMonths(date, months) {
+  const result = new Date(date);
+  const targetMonth = result.getMonth() + months;
+  const day = result.getDate();
+
+  result.setDate(1);
+  result.setMonth(targetMonth);
+  const lastDay = new Date(
+    result.getFullYear(),
+    result.getMonth() + 1,
+    0
+  ).getDate();
+  result.setDate(Math.min(day, lastDay));
+
+  return result;
+}
+
+function isPregnancyProfile(dob) {
+  const profileDate = parseProfileDate(dob);
+  if (!profileDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return profileDate > today;
+}
+
+function getPregnancyStage(dob) {
+  const expectedDate = parseProfileDate(dob);
+  if (!expectedDate) return "Pregnancy stage unavailable";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const estimatedStart = addCalendarMonths(expectedDate, -9);
+  const elapsedDays = Math.max(
+    0,
+    Math.floor((today - estimatedStart) / 86400000)
+  );
+  const weeks = Math.min(40, Math.floor(elapsedDays / 7));
+  let months =
+    (today.getFullYear() - estimatedStart.getFullYear()) * 12 +
+    today.getMonth() - estimatedStart.getMonth();
+  if (today.getDate() < estimatedStart.getDate()) months--;
+  months = Math.min(9, Math.max(0, months));
+
+  return `Approximately ${months} month${months === 1 ? "" : "s"} (${weeks} weeks) pregnant`;
+}
+
+async function validateProfileDate(dateString, requireConfirmation = true) {
+  const profileDate = parseProfileDate(dateString);
+  if (!profileDate) {
+    displaySystemMessage("Please enter a valid date.", "danger");
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (profileDate > today) {
+    const maximumExpectedDate = addCalendarMonths(today, 9);
+    if (profileDate > maximumExpectedDate) {
+      displaySystemMessage(
+        "The expected delivery date cannot be more than nine calendar months from today.",
+        "danger"
+      );
+      return false;
+    }
+
+    if (requireConfirmation) {
+      const choice = await Swal.fire({
+        title: "Confirm Pregnancy Profile",
+        text: `The selected date (${profileDate.toLocaleDateString()}) is in the future and will be saved as the expected delivery date. ${getPregnancyStage(dateString)}. CareNest supports pregnancy profiles, allowing expecting mothers to record their daily symptoms and receive pregnancy-aware health guidance.`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes, Register Profile",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#0F5C5E",
+        cancelButtonColor: "#6c757d",
+        reverseButtons: true
+      });
+
+      if (!choice.isConfirmed) return false;
+    }
+
+    return true;
+  }
+
+  const oldestAllowedDate = new Date(today);
+  oldestAllowedDate.setFullYear(oldestAllowedDate.getFullYear() - 12);
+  if (profileDate < oldestAllowedDate) {
+    displaySystemMessage(
+      "Born children must be 12 years old or younger.",
+      "danger"
+    );
+    return false;
+  }
+
+  return true;
 }
 
 // function to handle user logout and redirect to login page
@@ -515,6 +679,9 @@ function renderChildren() {
 
   childrenList.forEach(child => {
     const age = calculateAge(child.dob);
+    const profileAgeLabel = isPregnancyProfile(child.dob)
+      ? age
+      : `Age: ${age}`;
 
     grid.innerHTML += `
       <div class="col-md-4">
@@ -527,7 +694,7 @@ function renderChildren() {
             <h5 class="fw-bold mb-1">${child.name}</h5>
 
             <p class="text-muted small mb-3">
-              Age: ${age} | Gender: ${child.gender}
+              ${profileAgeLabel} | Gender: ${child.gender}
             </p>
 
             <button
@@ -548,6 +715,8 @@ async function handleSaveChild(event) {
   event.preventDefault();
 
   const form = document.getElementById("childForm");
+  if (!await validateProfileDate(form.elements.dob.value)) return;
+
   const formData = new FormData(form);
 
   try {
@@ -662,7 +831,7 @@ function accessChildProfile(childId) {
     child.name;
 
   document.getElementById("profileChildAgeGender").textContent =
-    `Age: ${calculateAge(child.dob)} • Gender: ${child.gender}`;
+    `${isPregnancyProfile(child.dob) ? calculateAge(child.dob) : `Age: ${calculateAge(child.dob)}`} • Gender: ${child.gender}`;
 
   document.getElementById("editChildId").value =
     child.child_id;
@@ -690,9 +859,10 @@ function accessChildProfile(childId) {
 async function handleEditChild(event) {
   event.preventDefault();
 
-  const formData = new FormData(
-    document.getElementById("editChildForm")
-  );
+  const form = document.getElementById("editChildForm");
+  if (!await validateProfileDate(form.elements.dob.value)) return;
+
+  const formData = new FormData(form);
 
   try {
     const response = await fetch(
@@ -1255,7 +1425,7 @@ async function sendAssessmentResultEmail(severity,recommendation,assessmentId){
     severity:severity||assessment?.severity||"Not provided",
     recommendation:recommendation||assessment?.recommendation||"No recommendation provided.",
     year:new Date().getFullYear(),
-    logo_url:"https://placehold.co/160x160/0F5C5E/FFFFFF.png?text=CareNest"
+    logo_url:"https://helenbot.tech/carenest/assets/images/logo.png",
   };
 
   console.log("EmailJS parameters:",templateParams);
@@ -1283,11 +1453,19 @@ function loadResultScreen(severity, recommendation, iconClass, dateString, asses
   const assessment = assessmentsList.find(
     item => Number(item.assessment_id) === Number(selectedAssessmentId)
   );
+  const child = assessment
+    ? childrenList.find(
+        item => Number(item.child_id) === Number(assessment.child_id)
+      )
+    : null;
+  const isPregnancyAssessment = child && isPregnancyProfile(child.dob);
 
   // Restore the saved satisfaction stars for this assessment
   resetSatisfactionStars(assessment?.satisfaction_rating);
 
-  document.getElementById("resultTitle").textContent = `${severity} Risk Level`;
+  document.getElementById("resultTitle").textContent = isPregnancyAssessment
+    ? `Pregnancy Assessment - ${severity} Risk Level`
+    : `${severity} Risk Level`;
   document.getElementById("resultDescription").textContent = recommendation;
   document.getElementById("resultIcon").className = iconClass;
 

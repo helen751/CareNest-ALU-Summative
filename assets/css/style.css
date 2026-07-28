@@ -220,13 +220,27 @@ body {
 
 .side-menu {
   width: 280px;
+  height: 100vh;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
   color: var(--white);
   background-color: var(--primary);
   box-shadow: 6px 0 15px rgba(0, 0, 0, 0.03);
+}
+
+.side-menu nav {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.side-menu > .mt-auto {
+  flex-shrink: 0;
 }
 
 .side-menu .brand-header {
@@ -400,7 +414,14 @@ body {
 
   .side-menu {
     width: 100%;
+    height: auto;
     min-height: auto;
+    position: static;
+    overflow: visible;
+  }
+
+  .side-menu nav {
+    overflow-y: visible;
   }
 
   .content-area {

@@ -30,7 +30,7 @@ session_start();
 
   <nav class="navbar navbar-expand-lg main-nav py-3" id="publicNavbar">
     <div class="container">
-      <a class="brand-logo-container" href="index.php">
+      <a class="brand-logo-container" href="index">
         <div class="brand-logo-frame">
           <img src="assets/images/logo.png" width="80" height="75" alt="Logo">
         </div>
@@ -44,14 +44,14 @@ session_start();
       <div class="collapse navbar-collapse" id="navContent">
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
           <li class="nav-item">
-            <a class="nav-link text-dark px-3 fw-semibold active" href="index.php">
+            <a class="nav-link text-dark px-3 fw-semibold active" href="index">
               <i class="fa-solid fa-house me-1"></i> Home
             </a>
           </li>
           <?php
           if (isset($_SESSION['user_id'])) {
               echo '<li class="nav-item me-2">
-            <a class="btn btn-secondary-custom my-1 px-4" href="dashboard.php">
+            <a class="btn btn-secondary-custom my-1 px-4" href="dashboard">
               <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Dashboard
             </a>
           </li>

@@ -2,7 +2,7 @@
 require_once 'config.php';
 
 if (!isset($_SESSION['user_id'])) {
-  header("Location: login.html");
+  header("Location: login");
   exit;
 }
 
@@ -63,7 +63,7 @@ $passwordHash = $user['password_hash'];
     <!-- Left Sidebar Menu -->
     <aside class="side-menu">
       <div class="brand-header">
-        <a class="brand-logo-container" href="index.html">
+        <a class="brand-logo-container" href="index">
           <div class="brand-logo-frame bg-white" style="color: var(--primary);">
             <img src="assets/images/logo.png" alt="Logo" width="70" height="70" style="border-radius: 50%; object-fit: cover; margin-right: 20px;">
           </div>
@@ -738,6 +738,7 @@ $passwordHash = $user['password_hash'];
   <script src="https://cdn.datatables.net/2.3.8/js/dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/2.3.8/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     emailjs.init({
       publicKey: "Sd2JlDEa-A0biWBO2"
@@ -745,7 +746,7 @@ $passwordHash = $user['password_hash'];
   </script>
 
   <!-- Shared JS Code -->
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js?v=20260728-sweetalerts"></script>
 
   <script>
     const GEOAPIFY_API_KEY = "80c02f4074064f80826d21c6c60b7cbf";
@@ -1164,9 +1165,42 @@ $passwordHash = $user['password_hash'];
         const conditions = child?.previous_diagnoses || "None reported";
         const recommendation = activeHospitalAssessment.recommendation ||
           "Please evaluate the child based on the reported symptoms.";
+        const isPregnancy = child &&
+          typeof isPregnancyProfile === "function" &&
+          isPregnancyProfile(child.dob);
 
-        summaryText =
-          `CARENEST EMERGENCY ASSESSMENT SUMMARY
+        if (isPregnancy) {
+          const pregnancyStage = typeof getPregnancyStage === "function"
+            ? getPregnancyStage(child.dob)
+            : "Pregnancy stage unavailable";
+          const reportedSymptoms =
+            extractPregnancyAssessmentResponses(activeHospitalAssessment);
+
+          summaryText =
+            `CARENEST PREGNANCY ASSESSMENT SUMMARY
+
+    Mother status: Pregnant
+    Pregnancy profile: ${childName}
+    Expected delivery date: ${child.dob}
+    Estimated pregnancy stage: ${pregnancyStage}
+    Assessment time: ${dateStr}
+    Risk level: ${severity}
+
+    Symptoms and answers reported by the mother:
+    ${reportedSymptoms}
+
+    Existing maternal medical conditions: ${conditions}
+
+    CareNest recommendation: ${recommendation}
+
+    Selected hospital: ${selectedHospitalName||"Not selected"}
+    ${selectedHospitalDuration?`Estimated driving time: Approximately ${selectedHospitalDuration} minutes\n`:""}
+    Please evaluate the pregnant mother urgently when warning signs are present.
+    This summary is health guidance, not a diagnosis of the mother or unborn baby.
+    CareNest does not replace antenatal care or a medical professional.`;
+        } else {
+          summaryText =
+            `CARENEST EMERGENCY ASSESSMENT SUMMARY
 
     Child: ${childName}
     Age: ${ageStr}
@@ -1180,13 +1214,14 @@ $passwordHash = $user['password_hash'];
     Selected hospital: ${selectedHospitalName||"Not selected"}
     ${selectedHospitalDuration?`Estimated driving time: Approximately ${selectedHospitalDuration} minutes\n`:""}
     Please evaluate the child urgently.`;
+        }
       }
 
       summaryText = summaryText.replace(/^ {4}/gm, "");
 
       if (summaryEl) {
         const summaryHtml = escapeSummaryHtml(summaryText).replace(
-          /^([ \t]*)(CARENEST EMERGENCY ASSESSMENT SUMMARY|Child:|Age:|Assessment time:|Risk level:|Existing medical conditions:|CareNest recommendation:|Selected hospital:|Estimated driving time:)/gm,
+          /^([ \t]*)(CARENEST EMERGENCY ASSESSMENT SUMMARY|CARENEST PREGNANCY ASSESSMENT SUMMARY|Child:|Age:|Mother status:|Pregnancy profile:|Expected delivery date:|Estimated pregnancy stage:|Assessment time:|Risk level:|Symptoms and answers reported by the mother:|Existing medical conditions:|Existing maternal medical conditions:|CareNest recommendation:|Selected hospital:|Estimated driving time:)/gm,
           "$1<strong>$2</strong>"
         );
         summaryEl.innerHTML = summaryHtml;
@@ -1269,6 +1304,41 @@ $passwordHash = $user['password_hash'];
       } catch (error) {
         return null;
       }
+    }
+
+    function extractPregnancyAssessmentResponses(assessment) {
+      const symptoms = safelyParseJson(assessment.symptoms_json) || {};
+      const questions = Array.isArray(symptoms.questions)
+        ? symptoms.questions
+        : [];
+      const answers = Array.isArray(symptoms.answers)
+        ? symptoms.answers
+        : [];
+      const lines = [];
+
+      answers.forEach((answer, index) => {
+        const answerText = typeof answer === "object"
+          ? answer.answer || answer.value || answer.response
+          : answer;
+        if (
+          answerText === undefined ||
+          answerText === null ||
+          String(answerText).trim() === ""
+        ) {
+          return;
+        }
+
+        const question = questions[index];
+        const questionText = typeof question === "object"
+          ? question.question || question.text || `Question ${index + 1}`
+          : question || `Question ${index + 1}`;
+
+        lines.push(`- ${questionText}: ${answerText}`);
+      });
+
+      return lines.length
+        ? lines.join("\n")
+        : "- Detailed responses were not available.";
     }
 
     function extractAssessmentWarningSigns(assessment) {

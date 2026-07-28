@@ -224,9 +224,80 @@ function getDashboardData($pdo)
 }
 
 
+function addCalendarMonthsClamped(DateTimeImmutable $date, int $months)
+{
+    $day = (int) $date->format('d');
+    $modifier = ($months >= 0 ? '+' : '') . $months . ' months';
+    $targetMonth = $date
+        ->modify('first day of this month')
+        ->modify($modifier);
+
+    return $targetMonth->setDate(
+        (int) $targetMonth->format('Y'),
+        (int) $targetMonth->format('m'),
+        min($day, (int) $targetMonth->format('t'))
+    );
+}
+
+function validateChildProfileDate($dateString)
+{
+    $profileDate = DateTimeImmutable::createFromFormat(
+        '!Y-m-d',
+        trim((string) $dateString)
+    );
+    $dateErrors = DateTimeImmutable::getLastErrors();
+
+    if (
+        !$profileDate ||
+        ($dateErrors !== false &&
+            ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0)) ||
+        $profileDate->format('Y-m-d') !== trim((string) $dateString)
+    ) {
+        return [
+            'valid' => false,
+            'message' => 'Please enter a valid date.'
+        ];
+    }
+
+    $today = new DateTimeImmutable('today');
+
+    if ($profileDate > $today) {
+        if ($profileDate > addCalendarMonthsClamped($today, 9)) {
+            return [
+                'valid' => false,
+                'message' => 'The expected delivery date cannot be more than nine calendar months from today.'
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'is_pregnancy' => true,
+            'date' => $profileDate
+        ];
+    }
+
+    if ($profileDate < $today->modify('-12 years')) {
+        return [
+            'valid' => false,
+            'message' => 'Born children must be 12 years old or younger.'
+        ];
+    }
+
+    return [
+        'valid' => true,
+        'is_pregnancy' => false,
+        'date' => $profileDate
+    ];
+}
+
 function addChild($pdo)
 {
     $userId = requireLogin();
+    $dateValidation = validateChildProfileDate($_POST['dob'] ?? '');
+
+    if (!$dateValidation['valid']) {
+        respond(false, $dateValidation['message']);
+    }
 
     try {
         $stmt = $pdo->prepare(
@@ -253,6 +324,11 @@ function addChild($pdo)
 function updateChild($pdo)
 {
     $userId = requireLogin();
+    $dateValidation = validateChildProfileDate($_POST['dob'] ?? '');
+
+    if (!$dateValidation['valid']) {
+        respond(false, $dateValidation['message']);
+    }
 
     try {
         $stmt = $pdo->prepare(
@@ -419,16 +495,53 @@ function generateQuestions($pdo){
         respond(false, 'Child profile not found.');
     }
 
-    $birthDate = new DateTime($child['dob']);
-    $today = new DateTime();
+    $birthDate = new DateTimeImmutable($child['dob']);
+    $today = new DateTimeImmutable('today');
+    $isPregnancy = $birthDate > $today;
+    $ageInDays = $isPregnancy ? null : $birthDate->diff($today)->days;
 
-    if ($birthDate > $today) {
-        respond(false, 'The child date of birth is invalid.');
+    if ($isPregnancy) {
+        $estimatedPregnancyStart = addCalendarMonthsClamped($birthDate, -9);
+        $estimatedGestationDays = $today > $estimatedPregnancyStart
+            ? $estimatedPregnancyStart->diff($today)->days
+            : 0;
+        $estimatedGestationWeeks = intdiv($estimatedGestationDays, 7);
+
+        $prompt = "
+Create 6 simple pregnancy health assessment questions.
+
+The selected profile represents an unborn baby.
+The stored date {$child['dob']} is the expected delivery date.
+Estimated pregnancy stage: approximately {$estimatedGestationWeeks} weeks.
+Previous maternal conditions or notes: {$child['previous_diagnoses']}
+
+CareNest supports pregnancy profiles, allowing expecting mothers to record their daily symptoms and receive pregnancy-aware health guidance.
+
+The questions must:
+- assess the pregnant mother's current symptoms, comfort, warning signs, and wellbeing;
+- use simple English;
+- ask about relevant concerns such as pain, bleeding, dizziness, fever,
+  vomiting, swelling, breathing difficulty, severe headache, and other urgent warning signs;
+- ask about reduced fetal movement only when relevant to the estimated pregnancy stage;
+- not ask normal child-health questions intended for a born child;
+- not diagnose the mother or unborn baby;
+- make clear that CareNest guidance does not replace antenatal care or a medical professional;
+- provide 3 or 4 short answer choices.
+
+Return only valid JSON using this structure:
+
+{
+  \"questions\": [
+    {
+      \"key\": \"bleeding\",
+      \"question\": \"Are you experiencing any bleeding?\",
+      \"options\": [\"No\", \"A little\", \"Heavy bleeding\"]
     }
-
-    $ageInDays = $birthDate->diff($today)->days;
-
-    $prompt = "
+  ]
+}
+";
+    } else {
+        $prompt = "
 Create 6 simple child health assessment questions.
 
 Child age: {$ageInDays} days old
@@ -456,6 +569,7 @@ Return only valid JSON using this structure:
   ]
 }
 ";
+    }
 
     $result = callGemini($prompt);
 
@@ -509,15 +623,11 @@ function analyseAssessment($pdo)
             respond(false, 'Child profile not found.');
         }
 
-        // Calculate the child's age in days.
-        $birthDate = new DateTime($child['dob']);
-        $today = new DateTime();
-
-        if ($birthDate > $today) {
-            respond(false, 'The child date of birth is invalid.');
-        }
-
-        $ageInDays = $birthDate->diff($today)->days;
+        // Determine whether the stored date is a birth date or expected delivery date.
+        $birthDate = new DateTimeImmutable($child['dob']);
+        $today = new DateTimeImmutable('today');
+        $isPregnancy = $birthDate > $today;
+        $ageInDays = $isPregnancy ? null : $birthDate->diff($today)->days;
 
         // Combine each question with its selected answer.
         $assessmentDetails = '';
@@ -543,7 +653,57 @@ function analyseAssessment($pdo)
             $previousDiagnoses = 'No previous diagnoses provided';
         }
 
-        $prompt = "
+        if ($isPregnancy) {
+            $estimatedPregnancyStart = addCalendarMonthsClamped($birthDate, -9);
+            $estimatedGestationDays = $today > $estimatedPregnancyStart
+                ? $estimatedPregnancyStart->diff($today)->days
+                : 0;
+            $estimatedGestationWeeks = intdiv($estimatedGestationDays, 7);
+
+            $prompt = "
+You are assisting with a pregnancy health assessment.
+
+The selected profile represents an unborn baby.
+The stored date {$child['dob']} is the expected delivery date.
+Estimated pregnancy stage: approximately {$estimatedGestationWeeks} weeks.
+The assessment responses describe the pregnant mother's current condition, not symptoms of the unborn baby.
+Previous maternal conditions or notes: {$previousDiagnoses}
+
+Assessment responses:
+{$assessmentDetails}
+
+Classify the assessment using only one of these severity levels:
+
+Low:
+No serious warning signs are reported, but routine antenatal care should continue.
+
+Medium:
+The pregnant mother should contact an antenatal or healthcare professional promptly.
+
+High:
+The pregnant mother may need urgent medical attention or emergency care.
+
+Important rules:
+- Do not diagnose the mother or unborn baby.
+- Assess the mother's pain, bleeding, dizziness, fever, vomiting, swelling,
+  breathing difficulty, severe headache, reduced fetal movement when relevant,
+  and any other reported warning signs.
+- Recommend urgent professional medical care when serious warning signs are reported.
+- Make clear that CareNest provides guidance and does not replace antenatal care or a medical professional.
+- Do not describe the result as a diagnosis of the unborn baby.
+- Keep the recommendation under 120 words.
+- Return only valid JSON.
+- Do not include Markdown or code fences.
+
+Return exactly this JSON structure:
+
+{
+  \"severity\": \"Low\",
+  \"recommendation\": \"Clear pregnancy-aware guidance for the expecting mother.\"
+}
+";
+        } else {
+            $prompt = "
 You are assisting with a basic child health assessment.
 
 Child information:
@@ -584,6 +744,7 @@ Return exactly this JSON structure:
   \"recommendation\": \"Clear guidance for the guardian.\"
 }
 ";
+        }
 
         $result = callGemini($prompt);
 
