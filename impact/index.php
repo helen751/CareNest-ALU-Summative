@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CareNest - System Impact Analytics</title>
-  
+  <!-- favicon -->
+  <link rel="icon" type="image/x-icon" href="assets/images/logo.png">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   

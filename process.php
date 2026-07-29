@@ -16,6 +16,18 @@ switch ($action) {
         loginUser($pdo);
         break;
 
+    case 'request_password_reset':
+        requestPasswordReset($pdo);
+        break;
+
+    case 'validate_password_reset':
+        validatePasswordReset($pdo);
+        break;
+
+    case 'reset_password':
+        resetPassword($pdo);
+        break;
+
     case 'get_dashboard':
         getDashboardData($pdo);
         break;
@@ -131,6 +143,169 @@ function loginUser($pdo)
         ]);
     } catch (PDOException $e) {
         respond(false, 'Login could not be completed.');
+    }
+}
+
+function createPasswordResetSignature($userId, $expires, $nonce, $passwordHash)
+{
+    return hash_hmac(
+        'sha256',
+        $userId . '|' . $expires . '|' . $nonce,
+        $passwordHash
+    );
+}
+
+function requestPasswordReset($pdo)
+{
+    $email = trim($_POST['email'] ?? '');
+    $genericMessage =
+        'If an account exists for this email, a password reset link has been sent.';
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        respond(false, 'Please enter a valid email address.');
+    }
+
+    try {
+        $statement = $pdo->prepare(
+            'SELECT user_id, email, password_hash
+             FROM users
+             WHERE email = ?
+             LIMIT 1'
+        );
+        $statement->execute([$email]);
+        $user = $statement->fetch();
+
+        if (!$user) {
+            respond(true, $genericMessage);
+        }
+
+        $expires = time() + 3600;
+        $nonce = bin2hex(random_bytes(16));
+        $signature = createPasswordResetSignature(
+            $user['user_id'],
+            $expires,
+            $nonce,
+            $user['password_hash']
+        );
+        $resetLink = 'https://helenbot.tech/reset-password.php?' . http_build_query([
+            'uid' => $user['user_id'],
+            'scope' => $expires,
+            'nonce' => $nonce,
+            'token' => $signature
+        ]);
+
+        respond(true, $genericMessage, [
+            'email_params' => [
+                'to_email' => $user['email'],
+                'user_id' => $user['user_id'],
+                'reset_link' => $resetLink,
+                'reset_url' => $resetLink,
+                'reset_password_link' => $resetLink,
+                'password_reset_link' => $resetLink,
+                'link' => $resetLink,
+                'url' => $resetLink,
+                'message' => 'Reset your CareNest password using this secure link: ' . $resetLink,
+                'logo_url' => 'https://helenbot.tech/carenest/assets/images/logo.png'
+            ]
+        ]);
+    } catch (Throwable $error) {
+        error_log('Password reset request failed: ' . $error->getMessage());
+        respond(true, $genericMessage);
+    }
+}
+
+function findValidPasswordResetUser($pdo)
+{
+    $userId = filter_var(
+        $_POST['uid'] ?? null,
+        FILTER_VALIDATE_INT
+    );
+    $expires = filter_var(
+        $_POST['scope'] ?? null,
+        FILTER_VALIDATE_INT
+    );
+    $nonce = trim($_POST['nonce'] ?? '');
+    $token = trim($_POST['token'] ?? '');
+
+    if (
+        !$userId ||
+        !$expires ||
+        $expires < time() ||
+        $expires > time() + 7200 ||
+        !preg_match('/^[a-f0-9]{32}$/', $nonce) ||
+        !preg_match('/^[a-f0-9]{64}$/', $token)
+    ) {
+        return null;
+    }
+
+    $statement = $pdo->prepare(
+        'SELECT user_id, password_hash
+         FROM users
+         WHERE user_id = ?
+         LIMIT 1'
+    );
+    $statement->execute([$userId]);
+    $user = $statement->fetch();
+
+    if (!$user) {
+        return null;
+    }
+
+    $expectedToken = createPasswordResetSignature(
+        $userId,
+        $expires,
+        $nonce,
+        $user['password_hash']
+    );
+
+    return hash_equals($expectedToken, $token) ? $user : null;
+}
+
+function validatePasswordReset($pdo)
+{
+    try {
+        if (!findValidPasswordResetUser($pdo)) {
+            respond(false, 'This password reset link is invalid or has expired.');
+        }
+
+        respond(true, 'Password reset link verified.');
+    } catch (PDOException $error) {
+        respond(false, 'This password reset link could not be verified.');
+    }
+}
+
+function resetPassword($pdo)
+{
+    $password = $_POST['password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
+
+    if (strlen($password) < 6) {
+        respond(false, 'The new password must contain at least 6 characters.');
+    }
+
+    if ($password !== $confirmPassword) {
+        respond(false, 'The password confirmation does not match.');
+    }
+
+    try {
+        $user = findValidPasswordResetUser($pdo);
+        if (!$user) {
+            respond(false, 'This password reset link is invalid or has expired.');
+        }
+
+        $statement = $pdo->prepare(
+            'UPDATE users
+             SET password_hash = ?
+             WHERE user_id = ?'
+        );
+        $statement->execute([
+            password_hash($password, PASSWORD_DEFAULT),
+            $user['user_id']
+        ]);
+
+        respond(true, 'Your password has been updated successfully.');
+    } catch (PDOException $error) {
+        respond(false, 'The password could not be updated.');
     }
 }
 
