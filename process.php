@@ -187,7 +187,7 @@ function requestPasswordReset($pdo)
             $nonce,
             $user['password_hash']
         );
-        $resetLink = 'https://helenbot.tech/reset-password.php?' . http_build_query([
+        $resetLink = 'https://helenbot.tech/carenest/reset-password.php?' . http_build_query([
             'uid' => $user['user_id'],
             'scope' => $expires,
             'nonce' => $nonce,
