@@ -249,6 +249,10 @@ function isPregnancyProfile(dob) {
   return profileDate > today;
 }
 
+function formatProfileGender(gender) {
+  return gender === "Other" ? "Unknown" : gender;
+}
+
 function getPregnancyStage(dob) {
   const expectedDate = parseProfileDate(dob);
   if (!expectedDate) return "Pregnancy stage unavailable";
@@ -727,16 +731,25 @@ function renderChildren() {
             <h5 class="fw-bold mb-1">${child.name}</h5>
 
             <p class="text-muted small mb-3">
-              ${profileAgeLabel} | Gender: ${child.gender}
+              ${profileAgeLabel} | Gender: ${formatProfileGender(child.gender)}
             </p>
 
-            <button
-              class="btn btn-secondary-custom w-100 btn-sm"
-              onclick="accessChildProfile(${child.child_id})"
-            >
-              <i class="fa-solid fa-folder-open me-1"></i>
-              Access Profile
-            </button>
+            <div class="d-grid gap-2">
+              <button
+                class="btn btn-secondary-custom w-100 btn-sm"
+                onclick="accessChildProfile(${child.child_id})"
+              >
+                <i class="fa-solid fa-folder-open me-1"></i>
+                Access Profile
+              </button>
+              <button
+                class="btn btn-primary-custom w-100 btn-sm"
+                onclick="startAssessmentForChild(${child.child_id})"
+              >
+                <i class="fa-solid fa-stethoscope me-1"></i>
+                Evaluate Now
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -864,7 +877,7 @@ function accessChildProfile(childId) {
     child.name;
 
   document.getElementById("profileChildAgeGender").textContent =
-    `${isPregnancyProfile(child.dob) ? calculateAge(child.dob) : `Age: ${calculateAge(child.dob)}`} • Gender: ${child.gender}`;
+    `${isPregnancyProfile(child.dob) ? calculateAge(child.dob) : `Age: ${calculateAge(child.dob)}`} • Gender: ${formatProfileGender(child.gender)}`;
 
   document.getElementById("editChildId").value =
     child.child_id;
@@ -887,6 +900,22 @@ function accessChildProfile(childId) {
     "block";
 
   switchDashSection("dashChildProfile");
+}
+
+async function startAssessmentForChild(childId) {
+  const child = childrenList.find(
+    item => Number(item.child_id) === Number(childId)
+  );
+
+  if (!child) return;
+
+  switchDashSection("dashAssessment");
+
+  const selectElement = document.getElementById("assessmentTargetChild");
+  if (!selectElement) return;
+
+  selectElement.value = String(child.child_id);
+  await beginAssessmentWizard();
 }
 
 async function handleEditChild(event) {

@@ -683,7 +683,7 @@ function generateQuestions($pdo){
         $estimatedGestationWeeks = intdiv($estimatedGestationDays, 7);
 
         $prompt = "
-Create 6 simple pregnancy health assessment questions.
+Create up to 10 focused pregnancy health assessment questions.
 
 The selected profile represents an unborn baby.
 The stored date {$child['dob']} is the expected delivery date.
@@ -694,6 +694,10 @@ CareNest supports pregnancy profiles, allowing expecting mothers to record their
 
 The questions must:
 - assess the pregnant mother's current symptoms, comfort, warning signs, and wellbeing;
+- include age-appropriate pregnancy wellbeing questions about sleep, energy, appetite,
+  hydration, mood, and daily comfort where relevant;
+- use the previous maternal conditions or notes to ask relevant follow-up questions
+  about current symptoms or changes; if no condition is recorded, do not invent one;
 - use simple English;
 - ask about relevant concerns such as pain, bleeding, dizziness, fever,
   vomiting, swelling, breathing difficulty, severe headache, and other urgent warning signs;
@@ -717,7 +721,7 @@ Return only valid JSON using this structure:
 ";
     } else {
         $prompt = "
-Create 6 simple child health assessment questions.
+Create up to 10 focused child health assessment questions.
 
 Child age: {$ageInDays} days old
 Gender: {$child['gender']}
@@ -726,9 +730,14 @@ Previous diagnoses: {$child['previous_diagnoses']}
 The questions must:
 - be suitable for the child's age;
 - use simple English for a mother or guardian;
-- focus on current symptoms;
-- cover fever, breathing, activity, feeding or hydration,
-  pain, rash, vomiting, and important warning signs;
+- include age-appropriate wellbeing questions about sleep, energy or activity,
+  feeding or appetite, hydration, comfort or mood, and toileting where relevant;
+- focus on the child's current symptoms and important warning signs;
+- use the previous diagnoses to include relevant questions about changes from the
+  child's normal condition, related symptoms, triggers, and current management;
+- if no previous diagnosis is recorded, do not invent diagnosis-related questions;
+- avoid generic or repeated questions, and make every question relevant to this child;
+- cover fever, breathing, pain, rash, and vomiting when relevant;
 - not diagnose the child;
 - provide 3 or 4 short answer choices.
 

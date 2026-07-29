@@ -267,7 +267,7 @@ $passwordHash = $user['password_hash'];
             </div>
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="childDob" class="form-label fw-semibold small">Date of Birth</label>
+                <label for="childDob" class="form-label fw-semibold small">Date of Birth / Expected Date of Delivery</label>
                 <input type="date" class="form-control" id="childDob" name="dob" required>
                 <div class="form-text text-muted small" style="font-size: 0.75rem;">Age limit verification is checked on-submit.</div>
               </div>
@@ -277,13 +277,13 @@ $passwordHash = $user['password_hash'];
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <option value="Other">Unknown</option>
                 </select>
               </div>
             </div>
             <div class="mb-4">
-              <label for="previousDiagnoses" class="form-label fw-semibold small">Pre-Existing Conditions / Asthma / Allergies</label>
-              <textarea class="form-control" id="previousDiagnoses" name="previous_diagnoses" rows="3" placeholder="Enter asthma history, food allergies, or type 'None' if clear"></textarea>
+              <label for="previousDiagnoses" class="form-label fw-semibold small">Pre-Existing Conditions / Allergies</label>
+              <textarea class="form-control" id="previousDiagnoses" name="previous_diagnoses" rows="3" placeholder="Enter diagnosis history, food allergies, or type 'None' if clear"></textarea>
             </div>
             <div class="d-flex gap-3">
               <button type="submit" class="btn btn-primary-custom px-4">
@@ -318,9 +318,14 @@ $passwordHash = $user['password_hash'];
               <h3 class="fw-bold text-dark mb-1" id="profileChildName">Sophia Vance</h3>
               <span class="badge" style="background-color: var(--secondary); color: var(--primary);" id="profileChildAgeGender">Age: 4 • Female</span>
             </div>
-            <button class="btn btn-outline-secondary btn-sm" onclick="switchDashSection('dashMyChildren')">
-              <i class="fa-solid fa-arrow-left me-1"></i> Back to List
-            </button>
+            <div class="d-flex gap-2 my-2">
+              <button class="btn btn-primary-custom btn-sm" onclick="startAssessmentForChild(Number(document.getElementById('editChildId').value))">
+                <i class="fa-solid fa-stethoscope me-1"></i> Evaluate Now
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="switchDashSection('dashMyChildren')">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to List
+              </button>
+            </div>
           </div>
 
           <div class="row g-4">
@@ -336,7 +341,7 @@ $passwordHash = $user['password_hash'];
                   <input type="text" class="form-control" id="editChildName" name="child_name" required>
                 </div>
                 <div class="mb-3">
-                  <label for="editChildDob" class="form-label fw-semibold small">Date of Birth</label>
+                  <label for="editChildDob" class="form-label fw-semibold small">Date of Birth / Expected Date of Delivery</label>
                   <input type="date" class="form-control" id="editChildDob" name="dob" required>
                 </div>
                 <div class="mb-3">
@@ -344,7 +349,7 @@ $passwordHash = $user['password_hash'];
                   <select class="form-select form-control" id="editChildGender" name="gender" required>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
-                    <option value="Other">Other</option>
+                    <option value="Other">Unknown</option>
                   </select>
                 </div>
                 <div class="mb-3">
@@ -767,7 +772,7 @@ $passwordHash = $user['password_hash'];
   </script>
 
   <!-- Shared JS Code -->
-  <script src="assets/js/app.js?v=20260729-mobile-sidebar"></script>
+  <script src="assets/js/app.js?v=20260729-profile-assessment"></script>
 
   <script>
     const GEOAPIFY_API_KEY = "80c02f4074064f80826d21c6c60b7cbf";

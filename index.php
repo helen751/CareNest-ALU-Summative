@@ -163,7 +163,7 @@ session_start();
                 <i class="fa-solid fa-clipboard-question"></i>
               </div>
               <h5 class="fw-bold mb-3 text-dark">2. Symptom Checker</h5>
-              <p class="text-muted mb-0">Evaluate primary symptoms, assess your child everydy and answer health related questions to help you make informed decisions.</p>
+              <p class="text-muted mb-0">Evaluate primary symptoms, assess your child everyday and answer health related questions to help you make informed decisions.</p>
             </div>
           </div>
           <div class="col-md-4">
