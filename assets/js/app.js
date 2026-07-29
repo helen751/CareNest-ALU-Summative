@@ -75,7 +75,9 @@ async function detectCountryForProfile() {
 
 
 // function to load dashboard data from the server and update the UI
+console.log("app.js loaded");
 async function loadDashboardData() {
+  console.log("loadDashboardData() called");
   try {
     const response = await fetch("process.php?action=get_dashboard");
     const result = await response.json();
