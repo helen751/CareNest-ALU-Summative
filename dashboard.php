@@ -60,9 +60,30 @@ $passwordHash = $user['password_hash'];
 
   <div class="dashboard-container">
 
+    <button
+      class="mobile-sidebar-toggle"
+      id="mobileSidebarToggle"
+      type="button"
+      aria-label="Open dashboard menu"
+      aria-controls="dashboardSidebar"
+      aria-expanded="false"
+      onclick="toggleMobileSidebar()"
+    >
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="mobile-sidebar-backdrop" id="mobileSidebarBackdrop" onclick="closeMobileSidebar()"></div>
+
     <!-- Left Sidebar Menu -->
-    <aside class="side-menu">
+    <aside class="side-menu" id="dashboardSidebar">
       <div class="brand-header">
+        <button
+          class="mobile-sidebar-close"
+          type="button"
+          aria-label="Close dashboard menu"
+          onclick="closeMobileSidebar()"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
         <a class="brand-logo-container" href="index">
           <div class="brand-logo-frame bg-white" style="color: var(--primary);">
             <img src="assets/images/logo.png" alt="Logo" width="70" height="70" style="border-radius: 50%; object-fit: cover; margin-right: 20px;">
@@ -746,7 +767,7 @@ $passwordHash = $user['password_hash'];
   </script>
 
   <!-- Shared JS Code -->
-  <script src="assets/js/app.js?v=20260728-sweetalerts"></script>
+  <script src="assets/js/app.js?v=20260729-mobile-sidebar"></script>
 
   <script>
     const GEOAPIFY_API_KEY = "80c02f4074064f80826d21c6c60b7cbf";

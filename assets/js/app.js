@@ -489,6 +489,37 @@ function switchDashSection(sectionId) {
     updateDashboardData();
     setTimeout(renderWellbeingChart, 150);
   }
+
+  closeMobileSidebar();
+}
+
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById("dashboardSidebar");
+  const shouldOpen = !sidebar?.classList.contains("mobile-open");
+
+  if (shouldOpen) {
+    openMobileSidebar();
+  } else {
+    closeMobileSidebar();
+  }
+}
+
+function openMobileSidebar() {
+  if (!window.matchMedia("(max-width: 991px)").matches) return;
+
+  document.getElementById("dashboardSidebar")?.classList.add("mobile-open");
+  document.getElementById("mobileSidebarBackdrop")?.classList.add("active");
+  document.getElementById("mobileSidebarToggle")
+    ?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("mobile-sidebar-open");
+}
+
+function closeMobileSidebar() {
+  document.getElementById("dashboardSidebar")?.classList.remove("mobile-open");
+  document.getElementById("mobileSidebarBackdrop")?.classList.remove("active");
+  document.getElementById("mobileSidebarToggle")
+    ?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("mobile-sidebar-open");
 }
 
 function updateDashboardData() {
@@ -1700,8 +1731,22 @@ async function handleUpdateProfile(event) {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-  if (window.location.pathname.includes("dashboard.php")) {
+  const page = window.location.pathname.split("/").pop();
+
+  if (page === "dashboard" || page === "dashboard.php") {
     await loadDashboardData();
     switchDashSection("dashHome");
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closeMobileSidebar();
+  }
+});
+
+window.addEventListener("resize", () => {
+  if (!window.matchMedia("(max-width: 991px)").matches) {
+    closeMobileSidebar();
   }
 });

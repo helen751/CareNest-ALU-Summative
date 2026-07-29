@@ -64,12 +64,12 @@ session_start();
           else{
           ?>
           <li class="nav-item me-2">
-            <a class="btn btn-secondary-custom my-1 px-4" href="login.html">
+            <a class="btn btn-secondary-custom my-1 px-4" href="login">
               <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In
             </a>
           </li>
           <li class="nav-item">
-            <a class="btn btn-primary-custom my-1 px-4" href="register.html">
+            <a class="btn btn-primary-custom my-1 px-4" href="register">
               <i class="fa-solid fa-user-plus me-1"></i> Register
             </a>
           </li>
@@ -92,10 +92,10 @@ session_start();
               Check symptoms, organize medical logs, and book professional appointments. Built to support mothers and guardians with clear, action-driven guidance when you need it most.
             </p>
             <div class="d-flex gap-3 flex-wrap">
-              <a class="btn btn-primary-custom btn-lg px-4" href="register.html">
-                <i class="fa-solid fa-user me-2"></i> Create Free Account
+              <a class="btn btn-primary-custom btn-lg px-4" href="#">
+                <i class="fa-solid fa-user me-2"></i> Watch Demo Video
               </a>
-              <a class="btn btn-secondary-custom btn-lg px-4" href="login.html">
+              <a class="btn btn-secondary-custom btn-lg px-4" href="impact/">
                 <i class="fa-solid fa-chart-line me-2"></i> See CareNest Analytics
               </a>
             </div>
@@ -319,7 +319,7 @@ session_start();
               <p class="text-white-50 mb-0 small">Clear & Reassuring Guidance for Parents and Guardians.</p>
             </div>
             <div class="col-md-6 text-center text-md-end">
-              <p class="text-white-50 mb-1 small">&copy; 2026 CareNest. All rights reserved. Your trusted parenting partner.</p>
+              <p class="text-white-50 mb-1 small">&copy; <?php echo date('Y'); ?> CareNest. All rights reserved. Your trusted parenting partner.</p>
               <span class="text-white-50 small" style="font-size: 0.75rem;">Developed with strict compliance to pediatric guidelines.</span>
             </div>
           </div>
