@@ -92,10 +92,10 @@ session_start();
               Check symptoms, organize medical logs, and book professional appointments. Built to support mothers and guardians with clear, action-driven guidance when you need it most.
             </p>
             <div class="d-flex gap-3 flex-wrap">
-              <a class="btn btn-primary-custom btn-lg px-4" href="#">
+              <a class="btn btn-primary-custom btn-lg px-4" target="_blank" href="https://youtu.be/bsWry9u6syc">
                 <i class="fa-solid fa-user me-2"></i> Watch Demo Video
               </a>
-              <a class="btn btn-secondary-custom btn-lg px-4" href="impact/">
+              <a class="btn btn-secondary-custom btn-lg px-4" target="_blank" href="impact/">
                 <i class="fa-solid fa-chart-line me-2"></i> See CareNest Analytics
               </a>
             </div>
