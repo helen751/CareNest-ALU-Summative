@@ -582,23 +582,8 @@ You should see tables similar to:
 # Configuring the Database Connection
 
 Locate the PHP database configuration file.
-
-Depending on your project, this may be:
-
 ```
-config/database.php
-```
-
-or
-
-```
-db.php
-```
-
-or the connection may be inside
-
-```
-process.php
+config.php
 ```
 
 Update the following values.
@@ -606,7 +591,7 @@ Update the following values.
 ```php
 $host = "localhost";
 $database = "carenest";
-$username = "carenest_user";
+$username = "user_created/root";
 $password = "your_password";
 ```
 
@@ -957,10 +942,10 @@ Fork the repository, create a focused branch, test your changes, and submit a pu
 
 # License
 
-No open-source license is currently included. All rights are reserved by the author.
+No open-source license is currently included. All rights are reserved by the author - Helen Ugoeze Okereke.
 
 ---
 
 # Author
 
-Developed by [Helen751](https://github.com/helen751) as an African Leadership University Intro to software engineering project.
+Developed by [Helen Ugoeze Okereke](https://github.com/helen751) as an African Leadership University Intro to software engineering project.
